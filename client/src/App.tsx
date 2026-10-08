@@ -3,12 +3,23 @@ import { api, type Health } from './api';
 import Analytics from './views/Analytics';
 import Appointments from './views/Appointments';
 import Chat from './views/Chat';
+import Conversations from './views/Conversations';
 import Dashboard from './views/Dashboard';
 import Dentists from './views/Dentists';
 import Knowledge from './views/Knowledge';
+import Patients from './views/Patients';
 import Services from './views/Services';
 
-type Tab = 'dashboard' | 'chat' | 'appointments' | 'dentists' | 'services' | 'knowledge' | 'analytics';
+type Tab =
+  | 'dashboard'
+  | 'chat'
+  | 'appointments'
+  | 'dentists'
+  | 'services'
+  | 'patients'
+  | 'conversations'
+  | 'knowledge'
+  | 'analytics';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
@@ -41,15 +52,14 @@ export default function App() {
         {/* Navigation Section */}
         <nav className="flex flex-col gap-1" aria-label="Main Navigation">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3.5 mb-1">
-            Clinic Suite
+            Clinic Operations
           </div>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'dashboard'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'dashboard'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
             onClick={() => setTab('dashboard')}
           >
             <span className="text-base">📊</span>
@@ -57,23 +67,21 @@ export default function App() {
           </button>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'chat'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'chat'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
             onClick={() => setTab('chat')}
           >
             <span className="text-base">💬</span>
-            <span>Patient AI Chat</span>
+            <span>Patient AI Chat & Voice</span>
           </button>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'appointments'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'appointments'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
             onClick={() => setTab('appointments')}
           >
             <span className="text-base">📅</span>
@@ -81,11 +89,10 @@ export default function App() {
           </button>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'dentists'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'dentists'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
             onClick={() => setTab('dentists')}
           >
             <span className="text-base">👨‍⚕️</span>
@@ -93,15 +100,25 @@ export default function App() {
           </button>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'services'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'services'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
             onClick={() => setTab('services')}
           >
             <span className="text-base">🦷</span>
             <span>Services & Prices</span>
+          </button>
+
+          <button
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'patients'
+                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
+                : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
+              }`}
+            onClick={() => setTab('patients')}
+          >
+            <span className="text-base">👤</span>
+            <span>Patients</span>
           </button>
 
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3.5 mt-3 mb-1">
@@ -109,11 +126,21 @@ export default function App() {
           </div>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'knowledge'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'conversations'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
+            onClick={() => setTab('conversations')}
+          >
+            <span className="text-base">📝</span>
+            <span>AI Summaries & Logs</span>
+          </button>
+
+          <button
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'knowledge'
+                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
+                : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
+              }`}
             onClick={() => setTab('knowledge')}
           >
             <span className="text-base">📚</span>
@@ -121,11 +148,10 @@ export default function App() {
           </button>
 
           <button
-            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${
-              tab === 'analytics'
+            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 text-left ${tab === 'analytics'
                 ? 'bg-teal-600 text-white shadow-md shadow-teal-900/30'
                 : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
-            }`}
+              }`}
             onClick={() => setTab('analytics')}
           >
             <span className="text-base">📈</span>
@@ -177,6 +203,8 @@ export default function App() {
         {tab === 'appointments' && <Appointments />}
         {tab === 'dentists' && <Dentists />}
         {tab === 'services' && <Services />}
+        {tab === 'patients' && <Patients />}
+        {tab === 'conversations' && <Conversations />}
         {tab === 'knowledge' && <Knowledge />}
         {tab === 'analytics' && <Analytics />}
       </main>

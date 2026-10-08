@@ -1,0 +1,32 @@
+[
+  {
+    "id": "pat_1",
+    "name": "Rahul Patel",
+    "phone": "+91 9876543210",
+    "email": "rahul.patel@example.com",
+    "dob": "1992-05-14",
+    "preferredDentist": "patel",
+    "totalAppointments": 3,
+    "createdAt": "2026-09-15T10:30:00Z"
+  },
+  {
+    "id": "pat_2",
+    "name": "Priya Shah",
+    "phone": "+91 9812345678",
+    "email": "priya.shah@example.com",
+    "dob": "1998-11-20",
+    "preferredDentist": "shah",
+    "totalAppointments": 1,
+    "createdAt": "2026-10-01T14:15:00Z"
+  },
+  {
+    "id": "pat_3",
+    "name": "Amit Kumar",
+    "phone": "+91 9988776655",
+    "email": "amit.kumar@example.com",
+    "dob": "1985-03-08",
+    "preferredDentist": "patel",
+    "totalAppointments": 2,
+    "createdAt": "2026-10-04T09:00:00Z"
+  }
+]

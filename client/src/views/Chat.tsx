@@ -20,11 +20,52 @@ export default function Chat() {
   const [sources, setSources] = useState<Source[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [msgs, busy]);
+
+  // Voice Text-to-Speech Helper
+  function speakText(text: string) {
+    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/\[.*?\]/g, '').replace(/[*_#]/g, '');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // Voice Speech-to-Text (Microphone Listener)
+  function startListening() {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech Recognition is not supported by your browser. Please try Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setInput(transcript);
+        send(transcript);
+      }
+    };
+
+    recognition.start();
+  }
 
   async function send(text: string) {
     const content = text.trim();
@@ -38,8 +79,10 @@ export default function Chat() {
       const r = await api.chat(history);
       setMsgs((m) => [...m, { role: 'assistant', content: r.reply, tools: r.toolsUsed, escalated: r.escalated }]);
       setSources(r.sources);
+      speakText(r.reply);
     } catch (e) {
-      setMsgs((m) => [...m, { role: 'assistant', content: e instanceof Error ? e.message : 'Something went wrong while connecting to the receptionist agent.', error: true }]);
+      const errText = e instanceof Error ? e.message : 'Something went wrong while connecting to the receptionist agent.';
+      setMsgs((m) => [...m, { role: 'assistant', content: errText, error: true }]);
     } finally {
       setBusy(false);
     }
@@ -53,46 +96,57 @@ export default function Chat() {
       <section className="flex flex-col h-full bg-white border-r border-slate-200 min-w-0" aria-label="Conversation">
         <header className="px-7 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Patient Chat Simulator</h1>
-            <p className="text-xs text-slate-500">Live patient interface powered by RAG and Claude agent tool execution</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Patient AI Receptionist Chat</h1>
+            <p className="text-xs text-slate-500">Live chat & voice interface powered by RAG and tool execution</p>
           </div>
-          <button
-            className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-1.5 shadow-xs"
-            onClick={() => { setMsgs([GREETING]); setSources([]); }}
-            title="Restart conversation"
-          >
-            <span>🔄</span>
-            <span>New Chat</span>
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1.5 ${voiceEnabled ? 'bg-teal-50 border-teal-300 text-teal-800' : 'bg-white border-slate-200 text-slate-600'
+                }`}
+              onClick={() => {
+                setVoiceEnabled(!voiceEnabled);
+                if (voiceEnabled) window.speechSynthesis?.cancel();
+              }}
+              title="Toggle Voice Responses (Text-to-Speech)"
+            >
+              <span>{voiceEnabled ? '🔊 Voice On' : '🔇 Voice Off'}</span>
+            </button>
+
+            <button
+              className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-xs"
+              onClick={() => { setMsgs([GREETING]); setSources([]); window.speechSynthesis?.cancel(); }}
+              title="Restart conversation"
+            >
+              <span>🔄 New Chat</span>
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-7 flex flex-col gap-5 bg-slate-50/70" role="log" aria-live="polite">
           {msgs.map((m, i) => (
             <div
               key={i}
-              className={`flex gap-3 max-w-[85%] ${
-                m.role === 'user' ? 'self-end flex-row-reverse' : 'self-start'
-              }`}
+              className={`flex gap-3 max-w-[85%] ${m.role === 'user' ? 'self-end flex-row-reverse' : 'self-start'
+                }`}
             >
               <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-xs ${
-                  m.role === 'assistant'
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-xs ${m.role === 'assistant'
                     ? 'bg-teal-100 text-teal-800 border border-teal-200'
                     : 'bg-slate-900 text-white'
-                }`}
+                  }`}
               >
                 {m.role === 'assistant' ? '🤖' : '👤'}
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <div
-                  className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-xs whitespace-pre-wrap break-words ${
-                    m.error
+                  className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-xs whitespace-pre-wrap break-words ${m.error
                       ? 'bg-rose-50 text-rose-700 border border-rose-200'
                       : m.role === 'assistant'
-                      ? 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs'
-                      : 'bg-teal-600 text-white rounded-tr-xs font-normal'
-                  }`}
+                        ? 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs'
+                        : 'bg-teal-600 text-white rounded-tr-xs font-normal'
+                    }`}
                 >
                   {m.content}
                 </div>
@@ -151,18 +205,30 @@ export default function Chat() {
           <div ref={endRef} />
         </div>
 
-        {/* Input Composer */}
+        {/* Input Composer with Voice Microphone Button */}
         <div className="p-5 bg-white border-t border-slate-200 flex gap-3 items-center shrink-0">
+          <button
+            className={`w-11 h-11 rounded-xl flex items-center justify-center text-lg transition-all shrink-0 ${listening
+                ? 'bg-rose-600 text-white animate-pulse shadow-md shadow-rose-600/30'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+              }`}
+            onClick={startListening}
+            title="Click to speak (Voice STT Input)"
+          >
+            🎙️
+          </button>
+
           <input
             className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-teal-500 focus:ring-3 focus:ring-teal-500/15 text-sm text-slate-800 shadow-xs transition-all"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send(input)}
-            placeholder="Ask about dental services, prices, or book an appointment…"
+            placeholder={listening ? 'Listening to your voice…' : 'Ask about dental services, prices, or book an appointment…'}
             maxLength={2000}
             aria-label="Patient message prompt"
             disabled={busy}
           />
+
           <button
             className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-sm shadow-md shadow-teal-600/20 transition-all shrink-0 flex items-center gap-1.5"
             onClick={() => send(input)}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "conv_1",
+    "patientName": "Rahul Patel",
+    "patientPhone": "+91 9876543210",
+    "intent": "Appointment Booking",
+    "summary": "Patient requested routine dental cleaning for tomorrow evening. AI verified dentist schedule with Dr. Patel and confirmed booking for 5:00 PM.",
+    "status": "Confirmed",
+    "date": "2026-10-02",
+    "time": "17:00",
+    "dentistName": "Dr. Patel",
+    "createdAt": "2026-10-01T16:30:00Z"
+  },
+  {
+    "id": "conv_2",
+    "patientName": "Priya Shah",
+    "patientPhone": "+91 9812345678",
+    "intent": "Specialist Consultation",
+    "summary": "Patient inquired about orthodontics and braces consultation pricing. AI retrieved pricing details (₹500 consult fee) and provided Dr. Shah's upcoming available slots.",
+    "status": "Inquired",
+    "date": "2026-10-03",
+    "time": "11:30",
+    "dentistName": "Dr. Shah",
+    "createdAt": "2026-10-02T11:00:00Z"
+  },
+  {
+    "id": "conv_3",
+    "patientName": "Emergency Guest",
+    "patientPhone": "+91 9000000000",
+    "intent": "Emergency Escalation",
+    "summary": "Patient reported severe facial swelling and uncontrolled toothache. Emergency classifier detected trauma intent and escalated immediately to urgent care human staff.",
+    "status": "Transferred",
+    "date": "2026-10-04",
+    "time": "14:10",
+    "dentistName": "On-call Doctor",
+    "createdAt": "2026-10-04T14:10:00Z"
+  }
+]

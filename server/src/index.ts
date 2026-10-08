@@ -4,9 +4,22 @@ import Fastify from 'fastify';
 import { extractText, getDocumentProxy } from 'unpdf';
 import { chat, type ChatMsg } from './agent';
 import { config } from './config';
-import { appointments, saveAppointments, services, dentists, type Status } from './db';
+import {
+  appointments,
+  saveAppointments,
+  services,
+  dentists,
+  patients,
+  savePatients,
+  conversations,
+  saveConversations,
+  type Status,
+  type Patient,
+  type ConversationLog,
+} from './db';
 import { book, getSlots } from './scheduling';
 import { addDocument, initStore, listDocuments, removeDocument, search } from './rag/store';
+import { randomUUID } from 'node:crypto';
 
 const app = Fastify({ logger: { level: 'info' } });
 await app.register(cors, { origin: true });
@@ -34,6 +47,8 @@ app.get('/api/stats', async () => {
     noShowAppointments: appts.filter((a) => a.status === 'no_show').length,
     totalServices: services().length,
     totalDentists: dentists().length,
+    totalPatients: patients().length,
+    totalConversations: conversations().length,
     totalDocuments: docs.length,
     totalPassages: totalChunks,
   };
@@ -127,6 +142,25 @@ app.post('/api/appointments', async (req, reply) => {
     return reply.code(400).send({ error: result.error });
   }
 
+  // Auto-sync patient directory
+  const currentPatients = patients();
+  const existingPatient = currentPatients.find((p) => p.phone === body.patientPhone);
+  if (!existingPatient) {
+    const newPat: Patient = {
+      id: randomUUID(),
+      name: body.patientName,
+      phone: body.patientPhone,
+      email: `${body.patientName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      preferredDentist: body.dentistId,
+      totalAppointments: 1,
+      createdAt: new Date().toISOString(),
+    };
+    savePatients([...currentPatients, newPat]);
+  } else {
+    existingPatient.totalAppointments += 1;
+    savePatients(currentPatients);
+  }
+
   return reply.code(201).send(result.appointment);
 });
 
@@ -149,6 +183,51 @@ app.delete('/api/appointments/:id', async (req, reply) => {
   const [removed] = all.splice(index, 1);
   saveAppointments(all);
   return { ok: true, removed };
+});
+
+// ---- Patients Directory API Endpoints ----
+app.get('/api/patients', async () => patients());
+
+app.post('/api/patients', async (req, reply) => {
+  const body = req.body as { name?: string; phone?: string; email?: string; preferredDentist?: string };
+  if (!body.name || !body.phone) return reply.code(400).send({ error: 'Patient name and phone are required.' });
+
+  const all = patients();
+  const newPatient: Patient = {
+    id: randomUUID(),
+    name: body.name,
+    phone: body.phone,
+    email: body.email || '',
+    preferredDentist: body.preferredDentist,
+    totalAppointments: 0,
+    createdAt: new Date().toISOString(),
+  };
+  savePatients([...all, newPatient]);
+  return reply.code(201).send(newPatient);
+});
+
+// ---- Conversations & Summaries API Endpoints ----
+app.get('/api/conversations', async () => conversations());
+
+app.post('/api/conversations', async (req, reply) => {
+  const body = req.body as Partial<ConversationLog>;
+  if (!body.patientName || !body.summary) return reply.code(400).send({ error: 'patientName and summary are required.' });
+
+  const all = conversations();
+  const newLog: ConversationLog = {
+    id: randomUUID(),
+    patientName: body.patientName || 'Guest',
+    patientPhone: body.patientPhone || 'N/A',
+    intent: body.intent || 'General Inquiry',
+    summary: body.summary,
+    status: body.status || 'Completed',
+    date: body.date || new Date().toISOString().split('T')[0],
+    time: body.time || '12:00',
+    dentistName: body.dentistName || 'General Staff',
+    createdAt: new Date().toISOString(),
+  };
+  saveConversations([newLog, ...all]);
+  return reply.code(201).send(newLog);
 });
 
 // ---- Catalog & Reference Data Endpoints ----

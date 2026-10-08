@@ -25,6 +25,30 @@ export type Appt = {
   dentistName?: string;
 };
 
+export type Patient = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  dob?: string;
+  preferredDentist?: string;
+  totalAppointments: number;
+  createdAt: string;
+};
+
+export type ConversationLog = {
+  id: string;
+  patientName: string;
+  patientPhone: string;
+  intent: string;
+  summary: string;
+  status: string;
+  date: string;
+  time: string;
+  dentistName: string;
+  createdAt: string;
+};
+
 export type Service = {
   id: string;
   name: string;
@@ -51,6 +75,8 @@ export type Stats = {
   noShowAppointments: number;
   totalServices: number;
   totalDentists: number;
+  totalPatients: number;
+  totalConversations: number;
   totalDocuments: number;
   totalPassages: number;
 };
@@ -73,7 +99,7 @@ export const api = {
   health: () => fetch('/api/health').then((r) => parse<Health>(r)),
   stats: () => fetch('/api/stats').then((r) => parse<Stats>(r)),
   chat: (messages: Msg[]) => fetch('/api/chat', json('POST', { messages })).then((r) => parse<ChatResponse>(r)),
-  
+
   docs: () => fetch('/api/knowledge').then((r) => parse<Doc[]>(r)),
   upload: (file: File) => {
     const fd = new FormData();
@@ -82,7 +108,7 @@ export const api = {
   },
   deleteDoc: (id: string) => fetch(`/api/knowledge/${id}`, { method: 'DELETE' }).then((r) => parse<{ ok: true }>(r)),
   search: (q: string) => fetch(`/api/knowledge/search?q=${encodeURIComponent(q)}`).then((r) => parse<Source[]>(r)),
-  
+
   appointments: () => fetch('/api/appointments').then((r) => parse<Appt[]>(r)),
   createAppointment: (data: { serviceId: string; dentistId: string; date: string; time: string; patientName: string; patientPhone: string }) =>
     fetch('/api/appointments', json('POST', data)).then((r) => parse<Appt>(r)),
@@ -90,7 +116,10 @@ export const api = {
     fetch(`/api/appointments/${id}`, json('PATCH', { status })).then((r) => parse<Appt>(r)),
   deleteAppointment: (id: string) =>
     fetch(`/api/appointments/${id}`, { method: 'DELETE' }).then((r) => parse<{ ok: true }>(r)),
-  
+
+  patients: () => fetch('/api/patients').then((r) => parse<Patient[]>(r)),
+  conversations: () => fetch('/api/conversations').then((r) => parse<ConversationLog[]>(r)),
+
   services: () => fetch('/api/services').then((r) => parse<Service[]>(r)),
   dentists: () => fetch('/api/dentists').then((r) => parse<Dentist[]>(r)),
 };
