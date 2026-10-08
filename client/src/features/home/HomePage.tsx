@@ -1,481 +1,504 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Logo from '../../components/common/Logo';
+import Hero from './components/Hero';
 import {
-  HiSparkles,
-  HiChatBubbleLeftRight,
-  HiCalendarDays,
-  HiBuildingOffice2,
-  HiShieldCheck,
-  HiBookOpen,
-  HiArrowRight,
-  HiPhone,
-  HiCheckCircle,
-  HiClock,
-  HiMapPin,
-  HiStar,
-  HiLockClosed,
-  HiPaperAirplane,
-  HiCodeBracket,
-  HiUserGroup,
-} from 'react-icons/hi2';
+  Bot,
+  Calendar,
+  Users,
+  FileText,
+  AlertTriangle,
+  CheckCircle2,
+  Building2,
+  Sparkles,
+  TrendingUp,
+  ShieldCheck,
+  HelpCircle,
+  Phone,
+  ArrowRight,
+  Star,
+  Calculator,
+  MessageSquare,
+  Zap,
+  Lock,
+  Globe,
+  Award
+} from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [quickQuestion, setQuickQuestion] = useState('');
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
 
-  const QUICK_PROMPTS = [
-    'How much does teeth whitening cost at our clinic?',
-    'Is Dr. Patel available this Friday for root canal?',
-    'How does AI Receptionist handle emergency toothache?',
-    'Can AI schedule appointments directly into our calendar?',
-  ];
+  // Interactive ROI Calculator State
+  const [missedCalls, setMissedCalls] = useState(25);
+  const [avgProcedureValue, setAvgProcedureValue] = useState(4500); // INR or USD equivalent
+  const conversionRate = 0.4; // 40% conversion rate of recovered calls to appointments
 
-  const handleQuickQuestionSubmit = (qText: string) => {
-    setQuickQuestion(qText);
-    setAiLoading(true);
-    setAiResponse(null);
+  const monthlyRecoveredCalls = Math.round(missedCalls * 4.33 * conversionRate);
+  const monthlyRecoveredRevenue = monthlyRecoveredCalls * avgProcedureValue;
+  const annualRecoveredRevenue = monthlyRecoveredRevenue * 12;
+
+  // Interactive AI Demo State
+  const [demoMessages, setDemoMessages] = useState([
+    {
+      sender: 'ai',
+      text: 'Hello! I am Maya, the 24/7 AI Receptionist for SmileCare Dental Suite. How can I assist your dental care today?',
+      time: 'Just now',
+    },
+  ]);
+  const [inputMsg, setInputMsg] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  const handleDemoSend = (text: string) => {
+    const userMessage = text || inputMsg;
+    if (!userMessage.trim()) return;
+
+    setDemoMessages((prev) => [
+      ...prev,
+      { sender: 'user', text: userMessage, time: 'Just now' },
+    ]);
+    setInputMsg('');
+    setIsTyping(true);
 
     setTimeout(() => {
-      let reply = 'AI Receptionist handles 24/7 patient queries, appointment bookings, and clinical information.';
-      const lower = qText.toLowerCase();
-      if (lower.includes('whitening')) {
-        reply =
-          'Laser Teeth Whitening is configured at ₹4,500. The AI receptionist explains treatment details, verifies dentist schedules, and books patient slots automatically!';
-      } else if (lower.includes('patel') || lower.includes('friday') || lower.includes('available')) {
-        reply =
-          'Dr. Priya Patel is available Mon-Sat from 9:00 AM to 5:00 PM. The AI assistant verifies real-time dentist roster slots before confirming patient appointments.';
-      } else if (lower.includes('emergency')) {
-        reply =
-          'For emergency dental pain or trauma, the AI assistant detects emergency intent and immediately transfers the patient to your clinic emergency escalation line!';
-      } else if (lower.includes('calendar') || lower.includes('schedule')) {
-        reply =
-          'Yes! The AI assistant connects directly with your clinic database to verify dentist availability and lock in confirmed appointment slots 24/7.';
-      } else {
-        reply = `Thank you for testing "${qText}". Our AI Receptionist engine instantly answers patient queries, manages procedure rates, and logs conversations in your clinic portal!`;
+      let aiResponse = 'I can help schedule your teeth cleaning or checkup with Dr. Krina Khunt! Would you prefer Friday afternoon or Saturday morning?';
+
+      const lower = userMessage.toLowerCase();
+      if (lower.includes('price') || lower.includes('cost') || lower.includes('cleaning')) {
+        aiResponse = 'Our standard Dental Hygiene & Scaling is ₹1,500. Dental Implants start from ₹25,000. Would you like to view our full treatment price list or book a consultation?';
+      } else if (lower.includes('emergency') || lower.includes('pain') || lower.includes('bleeding')) {
+        aiResponse = '🚨 EMERGENCY NOTICE: For severe dental trauma or uncontrollable bleeding, please call our emergency line (+91 98765 00000) or visit the nearest emergency room immediately!';
+      } else if (lower.includes('doctor') || lower.includes('dentist')) {
+        aiResponse = 'Our roster includes Dr. Krina Khunt (Implantologist), Dr. Rajesh Mehta (Orthodontist), and Dr. Priya Verma (Pediatric Dentist). Who would you like to see?';
       }
 
-      setAiResponse(reply);
-      setAiLoading(false);
-    }, 700);
+      setDemoMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: aiResponse, time: 'Just now' },
+      ]);
+      setIsTyping(false);
+    }, 900);
   };
 
-  const SAAS_FEATURES = [
+  const BENTO_FEATURES = [
     {
-      title: '24/7 AI Receptionist & Booking',
-      desc: 'Never miss a patient call or chat. Automated scheduling operates round-the-clock.',
-      icon: '🤖',
+      title: '24/7 AI Receptionist',
+      desc: 'Never miss a patient call or chat again. Operates 24/7 on web, WhatsApp, and SMS.',
+      icon: Bot,
       badge: '24/7 Active',
+      colSpan: 'md:col-span-2',
+      gradient: 'from-teal-500/10 via-teal-500/5 to-transparent',
     },
     {
-      title: 'Multi-Dentist Roster Management',
-      desc: 'Assign doctors, shift timings, specializations, and working days per practitioner.',
-      icon: '👨‍⚕️',
-      badge: 'Multi-Doctor',
+      title: 'Smart Calendar Booking',
+      desc: 'Direct sync with dentist rosters, slot availability, and instant reschedule/cancel.',
+      icon: Calendar,
+      badge: 'Direct Sync',
+      colSpan: 'md:col-span-1',
+      gradient: 'from-blue-500/10 to-transparent',
     },
     {
-      title: 'RAG Knowledge Uploads (PDFs)',
-      desc: 'Upload clinic PDFs, price lists, and insurance guidelines for instant AI retrieval.',
-      icon: '📚',
-      badge: 'RAG Search',
+      title: '"Train Your AI" Knowledge Base',
+      desc: 'Upload treatment rates, insurance policies, and FAQs. AI answers accurately from your docs.',
+      icon: FileText,
+      badge: 'PDF Indexing',
+      colSpan: 'md:col-span-1',
+      gradient: 'from-indigo-500/10 to-transparent',
     },
     {
-      title: 'Emergency Patient Escalation',
-      desc: 'Detects severe dental trauma, bleeding, or pain and directs to emergency lines.',
-      icon: '🚨',
+      title: 'Emergency Detection & Handoff',
+      desc: 'Intercepts urgent cases (severe pain, bleeding, trauma) and flags them for on-call dentists.',
+      icon: AlertTriangle,
       badge: 'Medical Safety',
-    },
-  ];
-
-  const CLINIC_STATS = [
-    { value: '250+', label: 'Registered Clinics', icon: '🏥' },
-    { value: '24 / 7', label: 'AI Reception Uptime', icon: '🤖' },
-    { value: '40%+', label: 'Booking Growth', icon: '📈' },
-    { value: '< 2 Sec', label: 'Response Speed', icon: '⚡' },
-  ];
-
-  const TESTIMONIALS = [
-    {
-      name: 'Dr. Krina Khunt',
-      clinic: 'SmileCare Dental Suite',
-      rating: 5,
-      comment:
-        'Registering our clinic on this platform transformed our front desk! Our AI Receptionist handles over 150 bookings a month after hours without any staff overhead.',
+      colSpan: 'md:col-span-2',
+      gradient: 'from-amber-500/10 via-rose-500/5 to-transparent',
     },
     {
-      name: 'Dr. Rajesh Mehta',
-      clinic: 'Apex Implant & Orthodontics',
-      rating: 5,
-      comment:
-        'The multi-dentist roster feature allows patients to pick specific specialists like our orthodontist or endodontist. Highly recommended SaaS tool!',
+      title: 'Automated Recall Campaigns',
+      desc: 'Reduces no-shows with automated WhatsApp/SMS cleaning reminders every 6 months.',
+      icon: Zap,
+      badge: 'No-Show -65%',
+      colSpan: 'md:col-span-1',
+      gradient: 'from-emerald-500/10 to-transparent',
     },
     {
-      name: 'Priya Verma',
-      clinic: 'City Dental Care',
-      rating: 5,
-      comment:
-        'Uploading our treatment price list PDF into the RAG knowledge base took 2 minutes. Now patients get accurate quotes in seconds.',
+      title: 'Embeddable 1-Line Web Widget',
+      desc: 'Copy one script tag onto your existing clinic website. Live in under 5 minutes.',
+      icon: Globe,
+      badge: 'Zero Code',
+      colSpan: 'md:col-span-2',
+      gradient: 'from-purple-500/10 to-transparent',
     },
   ];
 
   return (
-    <div className="flex flex-col gap-16 pb-20 font-sans text-slate-100 bg-[#050811] overflow-hidden">
+    <main className="flex flex-col gap-20 pb-24 font-sans text-slate-100 bg-[#050811] overflow-hidden select-none">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-[#080d1e] via-[#0b1329] to-[#050811] border-b border-slate-800/80 pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Animated Light Orbs */}
-        <div className="absolute top-10 right-1/4 w-[550px] h-[550px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none animate-float" />
-        <div className="absolute bottom-10 left-10 w-[450px] h-[450px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none animate-float-reverse" />
+      <Hero />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center relative z-10">
-          {/* Left Hero Main Copy */}
-          <div className="flex flex-col gap-6 animate-fade-in">
-            <div className="inline-flex items-center gap-3 bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold px-4 py-2 rounded-full w-fit shadow-lg shadow-teal-500/10">
-              <Logo variant="icon" size="sm" animated={true} />
-              <span>AI Receptionist SaaS Platform for Dental Clinics</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight font-heading">
-              Automate Your Dental Clinic Front Desk with{' '}
-              <span className="gradient-text-teal">24/7 AI Receptionist</span>
-            </h1>
-
-            <p className="text-slate-300 text-base md:text-lg leading-relaxed max-w-2xl font-normal">
-              Register your dental practice on our premium platform. Automate 24/7 appointment scheduling, dentist rosters, medical RAG knowledge, and emergency patient handoff.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <button
-                onClick={() => navigate('/register-clinic')}
-                className="btn-shimmer px-7 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-400 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm shadow-xl shadow-teal-500/25 transition-all duration-300 flex items-center gap-2.5 cursor-pointer hover:scale-[1.02]"
-              >
-                <HiBuildingOffice2 className="text-lg" />
-                <span>Register Your Clinic Now</span>
-                <HiArrowRight className="text-base" />
-              </button>
-
-              <button
-                onClick={() => navigate('/pricing')}
-                className="px-6 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-100 font-semibold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer hover:border-teal-500/50 hover:scale-[1.02] shadow-md"
-              >
-                <HiSparkles className="text-lg text-teal-400" />
-                <span>View Premium Plans</span>
-              </button>
-
-              <button
-                onClick={() => navigate('/login')}
-                className="px-4 py-3.5 rounded-2xl bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-700/50 text-indigo-200 font-medium text-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] ml-auto"
-              >
-                <HiLockClosed className="text-sm text-indigo-400" />
-                <span>Clinic Portal Sign In</span>
-              </button>
-            </div>
-
-            {/* Micro Stats Counter */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-800/80 mt-2">
-              {CLINIC_STATS.map((s, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col p-3 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-teal-500/30 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base">{s.icon}</span>
-                    <span className="text-lg font-bold text-white font-heading">{s.value}</span>
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-normal mt-0.5">{s.label}</span>
-                </div>
+      {/* Social Proof Strip */}
+      <section className="border-y border-white/10 bg-[#080d1d]/80 py-8 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+          <div>
+            <div className="flex items-center justify-center md:justify-start gap-1 text-amber-400 mb-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-amber-400" />
               ))}
+              <span className="text-xs font-bold text-slate-300 ml-2">4.9 / 5.0 Rating</span>
             </div>
+            <p className="text-xs text-slate-400 font-medium">
+              Trusted by <strong className="text-white font-bold">250+ Premier Dental Clinics</strong> across the globe
+            </p>
           </div>
 
-          {/* Right Hero Interactive AI Demo Widget Sandbox */}
-          <div className="gradient-border-card p-6 shadow-2xl backdrop-blur-2xl flex flex-col gap-4 animate-fade-in-delayed relative">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center justify-center font-bold text-lg shadow-inner">
-                    🤖
-                  </div>
-                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900 animate-ripple" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-base font-heading">
-                    Embedded AI Receptionist Sandbox Demo
-                  </h3>
-                  <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Gemini AI Engine Active</span>
-                  </span>
-                </div>
-              </div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-300 bg-teal-950/80 px-2.5 py-0.5 rounded-full border border-teal-800/80">
-                Clinic Demo
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed font-normal">
-              Test how your registered clinic's AI Receptionist responds to real patient questions:
-            </p>
-
-            {/* Quick Prompt Chips */}
-            <div className="flex flex-wrap gap-2">
-              {QUICK_PROMPTS.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleQuickQuestionSubmit(prompt)}
-                  className="text-left text-xs bg-slate-800/70 hover:bg-teal-950/60 text-teal-300 border border-slate-700 hover:border-teal-500/50 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer font-normal"
-                >
-                  💬 "{prompt}"
-                </button>
-              ))}
-            </div>
-
-            {/* Ask Box */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (quickQuestion.trim()) handleQuickQuestionSubmit(quickQuestion);
-              }}
-              className="flex items-center gap-2 bg-[#090d19] border border-slate-700/80 rounded-2xl p-2 focus-within:border-teal-500 transition-colors shadow-inner"
-            >
-              <input
-                type="text"
-                value={quickQuestion}
-                onChange={(e) => setQuickQuestion(e.target.value)}
-                placeholder="Ask about procedure cost, doctor roster, or emergency..."
-                className="w-full bg-transparent px-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none font-normal"
-              />
-              <button
-                type="submit"
-                className="btn-shimmer bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 p-2 rounded-xl font-bold transition cursor-pointer shrink-0 shadow-md"
-              >
-                <HiPaperAirplane className="text-sm" />
-              </button>
-            </form>
-
-            {/* AI Response Display Box */}
-            {aiLoading ? (
-              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs text-teal-400 flex items-center justify-center gap-3">
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-typing-1" />
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-typing-2" />
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-typing-3" />
-                </div>
-                <span>Searching clinic database…</span>
-              </div>
-            ) : aiResponse ? (
-              <div className="bg-teal-950/50 border border-teal-700/60 rounded-2xl p-4 text-xs text-teal-200 flex flex-col gap-2.5 animate-fade-in shadow-lg">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-teal-300 flex items-center gap-1.5">
-                    <HiSparkles className="text-teal-400 text-sm animate-pulse" />
-                    <span>AI Assistant Response:</span>
-                  </span>
-                  <button
-                    onClick={() => navigate('/register-clinic')}
-                    className="text-[10px] font-semibold text-teal-400 hover:text-teal-200 hover:underline cursor-pointer"
-                  >
-                    Register Your Clinic →
-                  </button>
-                </div>
-                <p className="leading-relaxed text-slate-200 font-normal">{aiResponse}</p>
-              </div>
-            ) : null}
+          <div className="flex flex-wrap items-center justify-center gap-8 opacity-70 grayscale hover:grayscale-0 transition-all">
+            <span className="font-heading font-extrabold text-sm text-slate-300 tracking-wider flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-teal-400" /> SMILECARE DENTAL
+            </span>
+            <span className="font-heading font-extrabold text-sm text-slate-300 tracking-wider flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-teal-400" /> APEX IMPLANTS
+            </span>
+            <span className="font-heading font-extrabold text-sm text-slate-300 tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-teal-400" /> CITY ORTHODONTICS
+            </span>
+            <span className="font-heading font-extrabold text-sm text-slate-300 tracking-wider flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-teal-400" /> DENTAL EXCELLENCE
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Main Content Sections */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-20">
-        {/* 3-Step Setup Section */}
-        <section className="flex flex-col gap-8">
-          <div className="text-center max-w-2xl mx-auto">
-            <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Simple Onboarding</span>
-            <h2 className="text-3xl font-bold text-white tracking-tight font-heading mt-1">
-              How Dental Clinics Deploy in 3 Simple Steps
-            </h2>
-            <p className="text-slate-300 text-xs sm:text-sm mt-2">
-              Get your clinic registered and operating with an AI receptionist in less than 5 minutes.
-            </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-24 w-full">
+        {/* 4 Stat Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-[#0a0f1d] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-teal-500/40 transition">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Call Resolution</span>
+              <Bot className="w-5 h-5 text-teal-400" />
+            </div>
+            <div className="text-4xl font-extrabold text-white font-heading mt-3">99.4%</div>
+            <p className="text-xs text-slate-400 mt-1">Queries answered accurately by AI</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#0a0e1c] border border-slate-800 rounded-3xl p-6 flex flex-col gap-4 shadow-xl hover:border-teal-500/40 transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-teal-500/15 border border-teal-500/30 text-teal-300 flex items-center justify-center font-extrabold text-xl font-heading shadow-inner">
-                1
-              </div>
-              <h3 className="font-bold text-white text-lg font-heading">Register Your Clinic</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-normal">
-                Fill in clinic name, address, doctor roster, and choose your SaaS subscription plan.
-              </p>
+          <div className="bg-[#0a0f1d] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-teal-500/40 transition">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Response Speed</span>
+              <Zap className="w-5 h-5 text-teal-400" />
             </div>
+            <div className="text-4xl font-extrabold text-white font-heading mt-3">&lt; 1.8s</div>
+            <p className="text-xs text-slate-400 mt-1">Instant patient response 24/7</p>
+          </div>
 
-            <div className="bg-[#0a0e1c] border border-slate-800 rounded-3xl p-6 flex flex-col gap-4 shadow-xl hover:border-teal-500/40 transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-extrabold text-xl font-heading shadow-inner">
-                2
-              </div>
-              <h3 className="font-bold text-white text-lg font-heading">Upload RAG Docs & Rates</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-normal">
-                Upload treatment price lists (PDFs), insurance guidelines, FAQs, and dentist shift schedules.
-              </p>
+          <div className="bg-[#0a0f1d] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-teal-500/40 transition">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Booking Increase</span>
+              <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
+            <div className="text-4xl font-extrabold text-emerald-400 font-heading mt-3">+40%</div>
+            <p className="text-xs text-slate-400 mt-1">After-hours appointments booked</p>
+          </div>
 
-            <div className="bg-[#0a0e1c] border border-slate-800 rounded-3xl p-6 flex flex-col gap-4 shadow-xl hover:border-teal-500/40 transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-center font-extrabold text-xl font-heading shadow-inner">
-                3
-              </div>
-              <h3 className="font-bold text-white text-lg font-heading">Embed Widget Snippet</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-normal">
-                Paste the 1-line JavaScript snippet into your clinic site. Your AI receptionist is live 24/7!
-              </p>
+          <div className="bg-[#0a0f1d] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group hover:border-teal-500/40 transition">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Average ROI</span>
+              <Calculator className="w-5 h-5 text-teal-400" />
             </div>
+            <div className="text-4xl font-extrabold text-white font-heading mt-3">4.2x</div>
+            <p className="text-xs text-slate-400 mt-1">Revenue return on monthly plan</p>
           </div>
         </section>
 
-        {/* Featured SaaS Capabilities */}
-        <section className="flex flex-col gap-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-teal-400 font-semibold text-xs uppercase tracking-wider">
-                <HiShieldCheck className="text-base text-teal-400" />
-                <span>Complete Clinic Suite</span>
+        {/* Interactive AI Chat Demo Section */}
+        <section className="bg-gradient-to-b from-[#0a0f22] to-[#070b16] border border-teal-500/30 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-bold px-3 py-1 rounded-full w-fit">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Interactive Live Demo</span>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white font-heading">
+              Test Your AI Receptionist Live Right Now
+            </h2>
+
+            <p className="text-slate-300 text-xs md:text-sm leading-relaxed">
+              Experience how Maya, our dental AI assistant, responds to patient inquiries about treatments, pricing, doctor availability, and emergencies in real-time.
+            </p>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Try clicking a sample question:</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleDemoSend('How much is a dental cleaning?')}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-teal-500/20 text-xs text-teal-300 border border-white/10 hover:border-teal-500/40 transition cursor-pointer"
+                >
+                  💰 How much is cleaning?
+                </button>
+                <button
+                  onClick={() => handleDemoSend('Can I book an appointment with Dr. Patel?')}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-teal-500/20 text-xs text-teal-300 border border-white/10 hover:border-teal-500/40 transition cursor-pointer"
+                >
+                  📅 Book with Dr. Patel
+                </button>
+                <button
+                  onClick={() => handleDemoSend('I have severe tooth pain and bleeding')}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 border border-rose-500/30 text-xs text-rose-300 hover:bg-rose-500/20 transition cursor-pointer"
+                >
+                  🚨 Severe Tooth Emergency
+                </button>
               </div>
-              <h2 className="text-3xl font-bold text-white tracking-tight font-heading mt-1">
-                Core Capabilities Built for Dental Clinics
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 bg-[#050811] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col h-[420px]">
+            {/* Widget Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center font-bold">
+                  <Bot className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-xs font-heading">Maya — AI Receptionist</h3>
+                  <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Online & Ready 24/7
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
+                Clinic: SmileCare Dental
+              </span>
+            </div>
+
+            {/* Chat Body */}
+            <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-3 pr-2 text-xs">
+              {demoMessages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 leading-relaxed ${msg.sender === 'user'
+                        ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-medium rounded-br-none shadow-md'
+                        : 'bg-[#0f172a] text-slate-200 border border-slate-800 rounded-bl-none shadow'
+                      }`}
+                  >
+                    {msg.text}
+                  </div>
+                  <span className="text-[9px] text-slate-500 mt-1 px-1">{msg.time}</span>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex items-center gap-1.5 bg-[#0f172a] border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-400 w-fit">
+                  <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-ping" />
+                  <span>Maya is drafting a response…</span>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleDemoSend(inputMsg);
+              }}
+              className="pt-3 border-t border-slate-800 flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={inputMsg}
+                onChange={(e) => setInputMsg(e.target.value)}
+                placeholder="Ask Maya about services, rates, or bookings…"
+                className="flex-1 bg-[#090e1a] border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-teal-500 transition"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition cursor-pointer flex items-center gap-1"
+              >
+                <span>Send</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {/* ROI Calculator Section */}
+        <section className="bg-[#080d1e] border border-white/10 rounded-3xl p-6 md:p-10 shadow-xl flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-teal-400 font-bold text-xs uppercase tracking-wider mb-1">
+                <Calculator className="w-4 h-4" />
+                <span>Revenue Impact Simulator</span>
+              </div>
+              <h2 className="text-3xl font-extrabold text-white font-heading">
+                Calculate How Much Revenue Your Clinic is Losing to Missed Calls
               </h2>
             </div>
-            <button
-              onClick={() => navigate('/services')}
-              className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1 cursor-pointer transition-transform hover:translate-x-1"
-            >
-              <span>Explore Full Platform Features</span>
-              <HiArrowRight />
-            </button>
+            <div className="text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 w-fit">
+              Based on industry avg 40% conversion rate of recovered calls
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SAAS_FEATURES.map((srv, idx) => (
-              <div
-                key={idx}
-                className="gradient-border-card p-6 shadow-xl flex flex-col justify-between gap-5 group transition-all duration-300 hover:-translate-y-1.5"
-              >
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl p-3 bg-slate-800/80 rounded-2xl border border-slate-700/80 group-hover:scale-105 transition-transform duration-300">
-                      {srv.icon}
-                    </span>
-                    <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-700/80">
-                      {srv.badge}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-white text-lg font-heading group-hover:text-teal-300 transition-colors">
-                    {srv.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-400 leading-relaxed font-normal">{srv.desc}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Controls */}
+            <div className="lg:col-span-7 flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center text-xs">
+                  <label className="font-bold text-slate-200">Missed Calls / Enquiries per Week:</label>
+                  <span className="font-mono font-bold text-teal-400 bg-teal-950 px-2.5 py-1 rounded border border-teal-800">
+                    {missedCalls} calls / week
+                  </span>
                 </div>
-
-                <div className="pt-4 border-t border-slate-800/80">
-                  <button
-                    onClick={() => navigate('/register-clinic')}
-                    className="btn-shimmer w-full py-2.5 rounded-xl bg-slate-800 hover:bg-teal-500 hover:text-slate-950 text-white font-semibold text-xs transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
-                  >
-                    <span>Register Clinic</span>
-                    <HiArrowRight />
-                  </button>
-                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  value={missedCalls}
+                  onChange={(e) => setMissedCalls(Number(e.target.value))}
+                  className="w-full accent-teal-400 cursor-pointer"
+                />
               </div>
-            ))}
+
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center text-xs">
+                  <label className="font-bold text-slate-200">Average Treatment Procedure Value:</label>
+                  <span className="font-mono font-bold text-teal-400 bg-teal-950 px-2.5 py-1 rounded border border-teal-800">
+                    ₹{avgProcedureValue.toLocaleString()} / $150
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="1000"
+                  max="25000"
+                  step="500"
+                  value={avgProcedureValue}
+                  onChange={(e) => setAvgProcedureValue(Number(e.target.value))}
+                  className="w-full accent-teal-400 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Result Display Box */}
+            <div className="lg:col-span-5 bg-gradient-to-br from-teal-950/80 via-slate-900 to-[#050811] border-2 border-teal-500/50 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 text-center">
+              <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">
+                Estimated Recovered Revenue
+              </span>
+
+              <div className="flex flex-col items-center">
+                <div className="text-4xl md:text-5xl font-extrabold text-white font-heading tracking-tight">
+                  ₹{monthlyRecoveredRevenue.toLocaleString()}
+                </div>
+                <span className="text-xs text-slate-400 mt-1">Per Month</span>
+              </div>
+
+              <div className="pt-3 border-t border-teal-500/30 flex items-center justify-between text-xs">
+                <span className="text-slate-300 font-medium">Annual Recovered Total:</span>
+                <strong className="text-emerald-400 font-bold font-mono text-sm">
+                  ₹{annualRecoveredRevenue.toLocaleString()}
+                </strong>
+              </div>
+
+              <button
+                onClick={() => navigate('/register-clinic')}
+                className="btn-shimmer w-full py-3 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-400 text-slate-950 font-bold text-xs shadow-lg transition cursor-pointer flex items-center justify-center gap-2 mt-2"
+              >
+                <span>Start Recovering Revenue Today</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* Testimonials */}
+        {/* Bento Grid Features */}
         <section className="flex flex-col gap-8">
-          <div>
-            <span className="text-xs font-semibold text-teal-400 uppercase tracking-wider">
-              Verified Dental Practices
-            </span>
-            <h2 className="text-3xl font-bold text-white tracking-tight font-heading mt-1">
-              Trusted by Dental Clinic Owners & Practitioners
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">SaaS Architecture</span>
+            <h2 className="text-3xl font-extrabold text-white font-heading mt-1">
+              Purpose-Built for Modern Dental Practices
             </h2>
+            <p className="text-slate-300 text-xs md:text-sm mt-2">
+              All the tools your clinic front desk needs to automate patient communication and scheduling.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-6 shadow-xl flex flex-col justify-between gap-4 hover:border-teal-500/40 transition-all duration-300"
-              >
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-1 text-amber-400">
-                    {[...Array(t.rating)].map((_, i) => (
-                      <HiStar key={i} className="text-base" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed italic font-normal">"{t.comment}"</p>
-                </div>
+            {BENTO_FEATURES.map((feat, i) => {
+              const IconComp = feat.icon;
+              return (
+                <div
+                  key={i}
+                  className={`${feat.colSpan} bg-gradient-to-b ${feat.gradient} bg-[#0a0f1d] border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col justify-between gap-6 shadow-xl hover:border-teal-500/30 transition-all duration-300 group`}
+                >
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-teal-950 text-teal-300 border border-teal-800">
+                        {feat.badge}
+                      </span>
+                    </div>
 
-                <div className="pt-3 border-t border-slate-800 flex flex-col">
-                  <span className="font-semibold text-white text-sm font-heading">{t.name}</span>
-                  <span className="text-[11px] text-teal-400 font-medium">{t.clinic}</span>
+                    <h3 className="text-xl font-bold text-white font-heading group-hover:text-teal-300 transition-colors">
+                      {feat.title}
+                    </h3>
+
+                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+                      {feat.desc}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-teal-400 font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Learn feature specs <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
-        {/* CTA Banner */}
-        <section className="bg-gradient-to-r from-teal-950 via-slate-900 to-slate-950 text-white rounded-3xl p-8 md:p-10 border border-teal-800/60 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="flex flex-col gap-4">
-            <span className="text-xs font-semibold text-teal-400 uppercase tracking-wider">
-              Get Started Today
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-white font-heading">
-              Ready to Upgrade Your Clinic's Front Desk?
+        {/* 3-Step Setup Section */}
+        <section className="flex flex-col gap-8 bg-[#080d1e] border border-white/10 rounded-3xl p-8 md:p-12">
+          <div className="text-center max-w-xl mx-auto">
+            <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Fast Setup</span>
+            <h2 className="text-3xl font-extrabold text-white font-heading mt-1">
+              Go Live in 3 Simple Steps
             </h2>
-            <p className="text-slate-300 text-xs md:text-sm leading-relaxed font-normal">
-              Register your dental clinic today and deploy your 24/7 AI Receptionist assistant in minutes.
-            </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <button
-                onClick={() => navigate('/register-clinic')}
-                className="btn-shimmer px-6 py-3 bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg transition cursor-pointer"
-              >
-                Register Your Clinic Now
-              </button>
-              <button
-                onClick={() => navigate('/pricing')}
-                className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs rounded-xl border border-slate-700 transition cursor-pointer"
-              >
-                View Premium Plans
-              </button>
-            </div>
           </div>
 
-          <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-6 flex flex-col gap-4 text-xs">
-            <div className="flex items-start gap-3">
-              <HiBuildingOffice2 className="text-teal-400 text-lg shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold text-white block text-sm">Register Clinic Tool</span>
-                <span className="text-slate-300 font-normal">
-                  Multi-doctor roster, customized AI persona, custom operating hours, and RAG knowledge uploads.
-                </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            <div className="bg-[#050811] border border-slate-800 rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 font-bold flex items-center justify-center text-base font-heading">
+                1
               </div>
+              <h3 className="font-bold text-white text-base font-heading">Register Your Clinic</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Provide clinic name, operating hours, doctors list, and pick a monthly or annual SaaS plan.
+              </p>
             </div>
 
-            <div className="flex items-start gap-3 border-t border-slate-800 pt-3">
-              <HiSparkles className="text-teal-400 text-lg shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold text-white block text-sm">Subscription Tier</span>
-                <span className="text-slate-300 font-normal">
-                  Flexible plans: Starter, Professional (Recommended), Enterprise.
-                </span>
+            <div className="bg-[#050811] border border-slate-800 rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 font-bold flex items-center justify-center text-base font-heading">
+                2
               </div>
+              <h3 className="font-bold text-white text-base font-heading">Train Your AI</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Upload your procedure price list PDF, insurance FAQs, and appointment guidelines.
+              </p>
+            </div>
+
+            <div className="bg-[#050811] border border-slate-800 rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
+              <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 font-bold flex items-center justify-center text-base font-heading">
+                3
+              </div>
+              <h3 className="font-bold text-white text-base font-heading">Embed Widget & Go Live</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Copy the 1-line script tag into your website. Your 24/7 AI receptionist is active immediately!
+              </p>
             </div>
           </div>
         </section>
       </div>
-    </div>
+    </main>
   );
 }

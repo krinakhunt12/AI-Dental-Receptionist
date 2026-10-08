@@ -2,197 +2,156 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthContext';
 import Logo from '../common/Logo';
-import {
-  HiHome,
-  HiBuildingOffice2,
-  HiSparkles,
-  HiBookmarkSquare,
-  HiInformationCircle,
-  HiPhone,
-  HiChartBarSquare,
-  HiArrowRightOnRectangle,
-  HiBars3,
-  HiXMark,
-  HiLockClosed,
-} from 'react-icons/hi2';
+import { HiBars3, HiXMark, HiArrowRight } from 'react-icons/hi2';
 
 export default function Navbar() {
-  const { user, health, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Exactly 5 navigation links as requested
   const navItems = [
-    { to: '/', label: 'Home', icon: HiHome, end: true },
-    { to: '/register-clinic', label: 'Register Clinic', icon: HiBuildingOffice2, highlight: true },
-    { to: '/pricing', label: 'Pricing & Plans', icon: HiSparkles },
-    { to: '/services', label: 'Services & Capabilities', icon: HiBookmarkSquare },
-    { to: '/about', label: 'About Platform', icon: HiInformationCircle },
-    { to: '/contact', label: 'Contact Sales', icon: HiPhone },
+    { to: '/', label: 'Product', end: true },
+    { to: '/pricing', label: 'Pricing' },
+    { to: '/services', label: 'Capabilities' },
+    { to: '/about', label: 'About' },
+    { to: '/contact', label: 'Contact' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 glass-dark-nav text-slate-100 shadow-2xl select-none transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-[#050811]/85 backdrop-blur-md border-b border-white/10 transition-colors duration-200 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo Component */}
-        <NavLink to="/" className="shrink-0">
-          <Logo variant="full" size="md" subtitle={health?.clinic ? `${health.clinic} Suite` : undefined} />
+        {/* Brand Logo */}
+        <NavLink
+          to="/"
+          className="shrink-0 focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none rounded-lg"
+          aria-label="SmileCare AI Home"
+        >
+          <Logo variant="full" size="md" subtitle="AI Receptionist" />
         </NavLink>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-1.5 ${isActive
-                    ? item.highlight
-                      ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 shadow-lg shadow-teal-500/20 font-bold'
-                      : 'bg-slate-800/90 text-teal-300 border border-teal-500/40 shadow-sm font-semibold'
-                    : item.highlight
-                      ? 'text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 font-medium hover:scale-[1.02]'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/70 font-medium'
-                  }`
-                }
-              >
-                <Icon className="text-sm shrink-0" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
+        {/* Desktop 5 Navigation Links (Single line, no wrap) */}
+        <nav
+          className="hidden lg:flex items-center gap-1"
+          aria-label="Main Navigation"
+        >
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                `px-3.5 py-2 text-sm font-medium transition-all rounded-lg cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none ${
+                  isActive
+                    ? 'text-teal-400 font-semibold border-b-2 border-teal-400 rounded-b-none bg-teal-500/5'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
 
-        {/* Right Action Buttons */}
-        <div className="hidden sm:flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => navigate('/register-clinic')}
-            className="btn-shimmer px-3.5 py-2 rounded-xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 text-slate-950 font-bold text-xs shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer hover:scale-[1.02]"
-          >
-            <HiBuildingOffice2 className="text-sm" />
-            <span>Register Clinic</span>
-          </button>
-
+        {/* Desktop Right Actions: Text Link "Sign in" + Primary Button "Register your clinic" */}
+        <div className="hidden lg:flex items-center gap-4 shrink-0">
           {user ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate('/dashboard')}
-                className="btn-shimmer px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-teal-600 hover:from-indigo-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
+                className="text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3 py-2 rounded-lg transition cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
               >
-                <HiChartBarSquare className="text-base text-indigo-200" />
-                <span>Clinic Portal</span>
+                Clinic Portal
               </button>
-
-              <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-xl">
-                <div className="w-6 h-6 rounded-lg bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold text-xs font-heading">
-                  {user.name.charAt(0)}
-                </div>
-                <span className="text-xs font-medium text-slate-200 max-w-[100px] truncate">
-                  {user.name}
-                </span>
-                <button
-                  onClick={() => logout()}
-                  className="text-slate-400 hover:text-rose-400 p-1 transition cursor-pointer"
-                  title="Sign out"
-                >
-                  <HiArrowRightOnRectangle className="text-sm" />
-                </button>
-              </div>
+              <button
+                onClick={() => logout()}
+                className="text-xs text-slate-400 hover:text-rose-400 transition cursor-pointer"
+              >
+                Sign out
+              </button>
             </div>
           ) : (
             <button
               onClick={() => navigate('/login')}
-              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
+              className="text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 px-3.5 py-2 rounded-lg transition cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
             >
-              <HiLockClosed className="text-sm text-indigo-400" />
-              <span>Portal Sign In</span>
+              Sign in
             </button>
           )}
+
+          <button
+            onClick={() => navigate('/register-clinic')}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 active:scale-[0.98] text-slate-950 font-semibold text-sm shadow-[0_4px_20px_-4px_rgba(45,212,191,0.35)] transition-all duration-200 flex items-center gap-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
+          >
+            <span>Register your clinic</span>
+            <HiArrowRight className="text-sm" />
+          </button>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Hamburger Toggle Button */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition"
-          aria-label="Toggle menu"
+          className="lg:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:outline-none"
+          aria-label={mobileOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
         >
           {mobileOpen ? <HiXMark className="text-2xl" /> : <HiBars3 className="text-2xl" />}
         </button>
       </div>
 
-      {/* Mobile Drawer Dropdown */}
+      {/* Mobile Drawer Dropdown (<1024px) */}
       {mobileOpen && (
-        <div className="lg:hidden bg-[#0a0e1a]/98 border-b border-slate-800 px-4 pt-3 pb-6 flex flex-col gap-2 animate-fade-in">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  `px-4 py-3 rounded-xl text-xs font-semibold transition-all flex items-center gap-3 ${isActive
-                    ? 'bg-slate-800 text-teal-300 border border-teal-500/40 font-semibold'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/70 font-normal'
-                  }`
-                }
-              >
-                <Icon className="text-base" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
-
-          <div className="pt-3 border-t border-slate-800 flex flex-col gap-2 mt-2">
-            <button
-              onClick={() => {
-                setMobileOpen(false);
-                navigate('/register-clinic');
-              }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md"
+        <div className="lg:hidden bg-[#050811]/98 border-b border-white/10 px-4 pt-3 pb-6 flex flex-col gap-2 animate-fade-in">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                `px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
+                  isActive
+                    ? 'bg-teal-500/10 text-teal-400 font-semibold border-l-2 border-teal-400'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                }`
+              }
             >
-              <HiBuildingOffice2 className="text-base" />
-              <span>Register Your Clinic Now</span>
-            </button>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
 
+          <div className="pt-4 mt-2 border-t border-white/10 flex flex-col gap-2.5">
             {user ? (
-              <>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    navigate('/dashboard');
-                  }}
-                  className="w-full py-3 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <HiChartBarSquare className="text-base" />
-                  <span>Open Clinic Portal</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    logout();
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 text-rose-300 text-xs font-medium flex items-center justify-center gap-2"
-                >
-                  <HiArrowRightOnRectangle className="text-base" />
-                  <span>Sign Out</span>
-                </button>
-              </>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  navigate('/dashboard');
+                }}
+                className="w-full py-2.5 rounded-lg bg-slate-800 text-slate-200 text-sm font-medium flex items-center justify-center gap-2"
+              >
+                Go to Clinic Portal
+              </button>
             ) : (
               <button
                 onClick={() => {
                   setMobileOpen(false);
                   navigate('/login');
                 }}
-                className="w-full py-3 rounded-xl bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700"
+                className="w-full py-2.5 rounded-lg text-slate-300 hover:bg-white/5 text-sm font-medium flex items-center justify-center border border-white/10"
               >
-                <HiLockClosed className="text-base text-indigo-400" />
-                <span>Sign In to Portal</span>
+                Sign in
               </button>
             )}
+
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                navigate('/register-clinic');
+              }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-400 text-slate-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98]"
+            >
+              <span>Register your clinic</span>
+              <HiArrowRight className="text-sm" />
+            </button>
           </div>
         </div>
       )}
