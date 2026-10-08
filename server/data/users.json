@@ -1,0 +1,42 @@
+[
+  {
+    "id": "usr_receptionist_1",
+    "name": "Krina Khunt",
+    "email": "receptionist@smilecare.com",
+    "passwordHash": "reception123",
+    "role": "receptionist",
+    "phone": "+91 98765 43210",
+    "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    "createdAt": "2026-10-08T10:20:22.927Z"
+  },
+  {
+    "id": "usr_admin_1",
+    "name": "Dr. Sarah Jenkins",
+    "email": "admin@smilecare.com",
+    "passwordHash": "admin123",
+    "role": "admin",
+    "phone": "+91 98111 22233",
+    "avatarUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
+    "createdAt": "2026-10-08T10:20:22.927Z"
+  },
+  {
+    "id": "usr_dentist_1",
+    "name": "Dr. Mark Rivera",
+    "email": "dentist@smilecare.com",
+    "passwordHash": "dentist123",
+    "role": "dentist",
+    "phone": "+91 98222 33344",
+    "avatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80",
+    "createdAt": "2026-10-08T10:20:22.927Z"
+  },
+  {
+    "id": "usr_patient_1",
+    "name": "Ananya Sharma",
+    "email": "patient@smilecare.com",
+    "passwordHash": "patient123",
+    "role": "patient",
+    "phone": "+91 98333 44455",
+    "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    "createdAt": "2026-10-08T10:20:22.927Z"
+  }
+]

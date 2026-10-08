@@ -13,9 +13,15 @@ import {
   savePatients,
   conversations,
   saveConversations,
+  users,
+  saveUsers,
+  sessions,
+  saveSessions,
   type Status,
   type Patient,
   type ConversationLog,
+  type User,
+  type UserRole,
 } from './db';
 import { book, getSlots } from './scheduling';
 import { addDocument, initStore, listDocuments, removeDocument, search } from './rag/store';
@@ -32,6 +38,86 @@ app.get('/api/health', async () => ({
   llm: config.anthropicKey ? config.model : 'demo (no ANTHROPIC_API_KEY)',
   retrieval: config.embeddingProvider,
 }));
+
+// ---- Authentication Endpoints ----
+app.post('/api/auth/login', async (req, reply) => {
+  const { email, password } = (req.body as { email?: string; password?: string }) || {};
+  if (!email || !password) return reply.code(400).send({ error: 'Email and password are required.' });
+
+  const allUsers = users();
+  const user = allUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
+
+  if (!user || user.passwordHash !== password) {
+    return reply.code(401).send({ error: 'Invalid email or password.' });
+  }
+
+  const token = `tok_${randomUUID()}`;
+  const allSessions = sessions();
+  const newSession = { token, userId: user.id, createdAt: new Date().toISOString() };
+  saveSessions([newSession, ...allSessions]);
+
+  const { passwordHash: _, ...userClean } = user;
+  return { token, user: userClean };
+});
+
+app.post('/api/auth/register', async (req, reply) => {
+  const { name, email, password, role, phone } = (req.body as { name?: string; email?: string; password?: string; role?: UserRole; phone?: string }) || {};
+  if (!name || !email || !password) {
+    return reply.code(400).send({ error: 'Name, email, and password are required.' });
+  }
+
+  const allUsers = users();
+  if (allUsers.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+    return reply.code(409).send({ error: 'An account with this email already exists.' });
+  }
+
+  const newUser: User = {
+    id: `usr_${randomUUID().slice(0, 8)}`,
+    name,
+    email,
+    passwordHash: password,
+    role: role || 'patient',
+    phone: phone || '',
+    avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
+    createdAt: new Date().toISOString(),
+  };
+
+  saveUsers([...allUsers, newUser]);
+
+  const token = `tok_${randomUUID()}`;
+  const allSessions = sessions();
+  const newSession = { token, userId: newUser.id, createdAt: new Date().toISOString() };
+  saveSessions([newSession, ...allSessions]);
+
+  const { passwordHash: _, ...userClean } = newUser;
+  return reply.code(201).send({ token, user: userClean });
+});
+
+app.get('/api/auth/me', async (req, reply) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : (req.query as { token?: string })?.token;
+
+  if (!token) return reply.code(401).send({ error: 'Missing auth token.' });
+
+  const session = sessions().find((s) => s.token === token);
+  if (!session) return reply.code(401).send({ error: 'Invalid or expired session token.' });
+
+  const user = users().find((u) => u.id === session.userId);
+  if (!user) return reply.code(404).send({ error: 'User not found.' });
+
+  const { passwordHash: _, ...userClean } = user;
+  return { user: userClean };
+});
+
+app.post('/api/auth/logout', async (req, reply) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : (req.body as { token?: string })?.token;
+  if (token) {
+    const remaining = sessions().filter((s) => s.token !== token);
+    saveSessions(remaining);
+  }
+  return { ok: true };
+});
 
 /** System & Analytics Statistics Summary Endpoint */
 app.get('/api/stats', async () => {

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { api, type Appt, type Status, type Service, type Dentist } from '../api';
+import { useAppointmentsQuery } from './hooks/useAppointmentsQuery';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { type Status } from '../../api';
 
 const STATUSES: { v: Status; label: string }[] = [
   { v: 'booked', label: 'Booked' },
@@ -8,14 +10,22 @@ const STATUSES: { v: Status; label: string }[] = [
   { v: 'no_show', label: 'No-show' },
 ];
 
-export default function Appointments() {
-  const [rows, setRows] = useState<Appt[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [dentists, setDentists] = useState<Dentist[]>([]);
+export default function AppointmentsPage() {
+  const {
+    appointments: rows,
+    services,
+    dentists,
+    isLoading,
+    isRefetching,
+    refetch,
+    createAppointment,
+    updateStatus,
+    deleteAppointment,
+  } = useAppointmentsQuery();
+
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
-  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   // Form State for New Appointment Modal
@@ -27,22 +37,12 @@ export default function Appointments() {
   const [time, setTime] = useState('10:00');
   const [submitting, setSubmitting] = useState(false);
 
-  const load = () => {
-    setLoading(true);
-    Promise.all([api.appointments(), api.services(), api.dentists()])
-      .then(([a, s, d]) => {
-        setRows(a);
-        setServices(s);
-        setDentists(d);
-        if (s.length) setServiceId(s[0].id);
-        if (d.length) setDentistId(d[0].id);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  };
+  useEffect(() => {
+    if (services.length && !serviceId) setServiceId(services[0].id);
+    if (dentists.length && !dentistId) setDentistId(dentists[0].id);
+  }, [services, dentists, serviceId, dentistId]);
 
   useEffect(() => {
-    load();
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     setDate(tomorrow.toISOString().split('T')[0]);
@@ -58,9 +58,9 @@ export default function Appointments() {
     setSubmitting(true);
     setError('');
     try {
-      await api.createAppointment({
-        serviceId,
-        dentistId,
+      await createAppointment({
+        serviceId: serviceId || (services[0]?.id ?? ''),
+        dentistId: dentistId || (dentists[0]?.id ?? ''),
         date,
         time,
         patientName,
@@ -69,12 +69,15 @@ export default function Appointments() {
       setShowModal(false);
       setPatientName('');
       setPatientPhone('');
-      load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Booking failed.');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading Appointments & Schedule…" />;
   }
 
   const totalBooked = rows.filter((r) => r.status === 'booked').length;
@@ -109,18 +112,18 @@ export default function Appointments() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto w-full p-8 flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto w-full p-8 flex flex-col gap-6 font-sans">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Appointments Dashboard & Calendar</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-heading">Appointments Dashboard & Calendar</h1>
           <p className="text-sm text-slate-500 mt-1">
             Real-time view of all appointments scheduled by the AI receptionist or clinic front-desk staff.
           </p>
         </div>
 
         <button
-          className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm shadow-md shadow-teal-600/20 transition-all flex items-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm shadow-md shadow-teal-600/20 transition-all flex items-center gap-2 cursor-pointer"
           onClick={() => setShowModal(true)}
         >
           <span>➕ Book New Appointment</span>
@@ -134,7 +137,7 @@ export default function Appointments() {
             📅
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-slate-900 leading-tight">{rows.length}</span>
+            <span className="text-2xl font-extrabold text-slate-900 leading-tight font-heading">{rows.length}</span>
             <span className="text-xs text-slate-500 font-medium">Total Appointments</span>
           </div>
         </div>
@@ -144,7 +147,7 @@ export default function Appointments() {
             🟢
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-slate-900 leading-tight">{totalBooked}</span>
+            <span className="text-2xl font-extrabold text-slate-900 leading-tight font-heading">{totalBooked}</span>
             <span className="text-xs text-slate-500 font-medium">Upcoming / Booked</span>
           </div>
         </div>
@@ -154,7 +157,7 @@ export default function Appointments() {
             ✔️
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-slate-900 leading-tight">{totalCompleted}</span>
+            <span className="text-2xl font-extrabold text-slate-900 leading-tight font-heading">{totalCompleted}</span>
             <span className="text-xs text-slate-500 font-medium">Completed Visits</span>
           </div>
         </div>
@@ -164,7 +167,7 @@ export default function Appointments() {
             ❌
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-slate-900 leading-tight">{totalCancelled}</span>
+            <span className="text-2xl font-extrabold text-slate-900 leading-tight font-heading">{totalCancelled}</span>
             <span className="text-xs text-slate-500 font-medium">Cancelled / No-Show</span>
           </div>
         </div>
@@ -196,11 +199,11 @@ export default function Appointments() {
           </select>
 
           <button
-            className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50"
-            onClick={load}
-            disabled={loading}
+            className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer"
+            onClick={() => refetch()}
+            disabled={isRefetching}
           >
-            <span>{loading ? 'Refreshing…' : '🔄 Refresh'}</span>
+            <span>{isRefetching ? 'Refreshing…' : '🔄 Refresh'}</span>
           </button>
         </div>
       </div>
@@ -246,7 +249,7 @@ export default function Appointments() {
                   <select
                     className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer outline-none transition-all ${getStatusColor(a.status)}`}
                     value={a.status}
-                    onChange={(e) => api.setStatus(a.id, e.target.value as Status).then(load)}
+                    onChange={(e) => updateStatus(a.id, e.target.value as Status)}
                     aria-label={`Status for ${a.patientName}`}
                   >
                     {STATUSES.map((s) => (
@@ -257,8 +260,8 @@ export default function Appointments() {
                   </select>
 
                   <button
-                    className="text-slate-400 hover:text-rose-600 text-xs font-semibold"
-                    onClick={() => api.deleteAppointment(a.id).then(load)}
+                    className="text-slate-400 hover:text-rose-600 text-xs font-semibold cursor-pointer"
+                    onClick={() => deleteAppointment(a.id)}
                     title="Delete appointment"
                   >
                     🗑️
@@ -284,8 +287,8 @@ export default function Appointments() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xl max-w-lg w-full flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h2 className="text-lg font-bold text-slate-900">Book New Appointment</h2>
-              <button className="text-slate-400 hover:text-slate-700 text-lg font-bold" onClick={() => setShowModal(false)}>✕</button>
+              <h2 className="text-lg font-bold text-slate-900 font-heading">Book New Appointment</h2>
+              <button className="text-slate-400 hover:text-slate-700 text-lg font-bold cursor-pointer" onClick={() => setShowModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleCreate} className="flex flex-col gap-3.5">
@@ -315,7 +318,7 @@ export default function Appointments() {
                 <div>
                   <label className="text-xs font-bold text-slate-700 uppercase">Service Procedure</label>
                   <select
-                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white"
+                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
                     value={serviceId}
                     onChange={(e) => setServiceId(e.target.value)}
                   >
@@ -328,7 +331,7 @@ export default function Appointments() {
                 <div>
                   <label className="text-xs font-bold text-slate-700 uppercase">Assigned Dentist</label>
                   <select
-                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white"
+                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
                     value={dentistId}
                     onChange={(e) => setDentistId(e.target.value)}
                   >
@@ -366,14 +369,14 @@ export default function Appointments() {
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                   onClick={() => setShowModal(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-md shadow-teal-600/20"
+                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-md shadow-teal-600/20 cursor-pointer disabled:opacity-50"
                   disabled={submitting}
                 >
                   {submitting ? 'Booking…' : 'Confirm Booking'}

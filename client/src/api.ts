@@ -1,3 +1,20 @@
+export type UserRole = 'admin' | 'receptionist' | 'dentist' | 'patient';
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phone?: string;
+  avatarUrl?: string;
+  createdAt: string;
+};
+
+export type AuthResponse = {
+  token: string;
+  user: User;
+};
+
 export type Msg = { role: 'user' | 'assistant'; content: string };
 export type Source = { source: string; text: string; score: number };
 export type ChatResponse = {
@@ -89,37 +106,58 @@ async function parse<T>(res: Response): Promise<T> {
   return data as T;
 }
 
+const getAuthHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem('smilecare_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const json = (method: string, body: unknown): RequestInit => ({
   method,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    ...getAuthHeaders(),
+  },
   body: JSON.stringify(body),
 });
 
 export const api = {
+  // Auth
+  login: (email: string, password: string) =>
+    fetch('/api/auth/login', json('POST', { email, password })).then((r) => parse<AuthResponse>(r)),
+  register: (data: { name: string; email: string; password: string; role?: UserRole; phone?: string }) =>
+    fetch('/api/auth/register', json('POST', data)).then((r) => parse<AuthResponse>(r)),
+  me: () =>
+    fetch('/api/auth/me', { headers: { ...getAuthHeaders() } }).then((r) => parse<{ user: User }>(r)),
+  logout: () =>
+    fetch('/api/auth/logout', json('POST', {})).then((r) => parse<{ ok: boolean }>(r)),
+
   health: () => fetch('/api/health').then((r) => parse<Health>(r)),
-  stats: () => fetch('/api/stats').then((r) => parse<Stats>(r)),
+  stats: () => fetch('/api/stats', { headers: getAuthHeaders() }).then((r) => parse<Stats>(r)),
   chat: (messages: Msg[]) => fetch('/api/chat', json('POST', { messages })).then((r) => parse<ChatResponse>(r)),
 
-  docs: () => fetch('/api/knowledge').then((r) => parse<Doc[]>(r)),
+  docs: () => fetch('/api/knowledge', { headers: getAuthHeaders() }).then((r) => parse<Doc[]>(r)),
   upload: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    return fetch('/api/knowledge', { method: 'POST', body: fd }).then((r) => parse<Doc>(r));
+    return fetch('/api/knowledge', { method: 'POST', headers: getAuthHeaders(), body: fd }).then((r) => parse<Doc>(r));
   },
-  deleteDoc: (id: string) => fetch(`/api/knowledge/${id}`, { method: 'DELETE' }).then((r) => parse<{ ok: true }>(r)),
-  search: (q: string) => fetch(`/api/knowledge/search?q=${encodeURIComponent(q)}`).then((r) => parse<Source[]>(r)),
+  deleteDoc: (id: string) => fetch(`/api/knowledge/${id}`, { method: 'DELETE', headers: getAuthHeaders() }).then((r) => parse<{ ok: true }>(r)),
+  search: (q: string) => fetch(`/api/knowledge/search?q=${encodeURIComponent(q)}`, { headers: getAuthHeaders() }).then((r) => parse<Source[]>(r)),
 
-  appointments: () => fetch('/api/appointments').then((r) => parse<Appt[]>(r)),
+  appointments: () => fetch('/api/appointments', { headers: getAuthHeaders() }).then((r) => parse<Appt[]>(r)),
   createAppointment: (data: { serviceId: string; dentistId: string; date: string; time: string; patientName: string; patientPhone: string }) =>
     fetch('/api/appointments', json('POST', data)).then((r) => parse<Appt>(r)),
   setStatus: (id: string, status: Status) =>
     fetch(`/api/appointments/${id}`, json('PATCH', { status })).then((r) => parse<Appt>(r)),
   deleteAppointment: (id: string) =>
-    fetch(`/api/appointments/${id}`, { method: 'DELETE' }).then((r) => parse<{ ok: true }>(r)),
+    fetch(`/api/appointments/${id}`, { method: 'DELETE', headers: getAuthHeaders() }).then((r) => parse<{ ok: true }>(r)),
 
-  patients: () => fetch('/api/patients').then((r) => parse<Patient[]>(r)),
-  conversations: () => fetch('/api/conversations').then((r) => parse<ConversationLog[]>(r)),
+  patients: () => fetch('/api/patients', { headers: getAuthHeaders() }).then((r) => parse<Patient[]>(r)),
+  conversations: () => fetch('/api/conversations', { headers: getAuthHeaders() }).then((r) => parse<ConversationLog[]>(r)),
 
-  services: () => fetch('/api/services').then((r) => parse<Service[]>(r)),
-  dentists: () => fetch('/api/dentists').then((r) => parse<Dentist[]>(r)),
+  services: () => fetch('/api/services', { headers: getAuthHeaders() }).then((r) => parse<Service[]>(r)),
+  dentists: () => fetch('/api/dentists', { headers: getAuthHeaders() }).then((r) => parse<Dentist[]>(r)),
 };
+
+export * from './api/queryKeys';
+
