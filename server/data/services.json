@@ -1,0 +1,10 @@
+[
+  { "id": "checkup", "name": "General Checkup", "priceInr": 500, "durationMin": 30, "dentistIds": ["patel", "shah"] },
+  { "id": "cleaning", "name": "Dental Cleaning", "priceInr": 800, "durationMin": 30, "dentistIds": ["patel"] },
+  { "id": "filling", "name": "Dental Filling", "priceInr": 1500, "durationMin": 45, "dentistIds": ["patel"] },
+  { "id": "root-canal", "name": "Root Canal", "priceInr": 5000, "durationMin": 90, "dentistIds": ["patel"] },
+  { "id": "whitening", "name": "Teeth Whitening", "priceInr": 3000, "durationMin": 60, "dentistIds": ["patel"] },
+  { "id": "extraction", "name": "Tooth Extraction", "priceInr": 1000, "durationMin": 30, "dentistIds": ["patel"] },
+  { "id": "braces-consult", "name": "Braces Consultation", "priceInr": 500, "durationMin": 30, "dentistIds": ["shah"], "priceNote": "Consultation fee only. Braces treatment cost is quoted after the consultation." },
+  { "id": "implant-consult", "name": "Dental Implant Consultation", "priceInr": 1000, "durationMin": 30, "dentistIds": ["patel"], "priceNote": "Consultation fee only. Implant cost is quoted after the consultation." }
+]

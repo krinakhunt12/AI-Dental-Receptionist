@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+client/node_modules
+server/node_modules
+
+# Build & Output
+dist
+client/dist
+server/dist
+build
+.vite
+.output
+
+# Environment files
+.env
+.env.local
+.env.*.local
+server/.env
+
+# Dynamic Runtime Data & Cache
+server/data/vectors.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Temporary Scratch Files
+scratch/
+.cache
