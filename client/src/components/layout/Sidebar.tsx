@@ -4,17 +4,17 @@ import Logo from '../common/Logo';
 import {
   HiGlobeAlt,
   HiChartBarSquare,
-  HiChatBubbleLeftRight,
-  HiCalendarDays,
+  HiBuildingOffice2,
   HiUserGroup,
-  HiBookmarkSquare,
   HiUsers,
   HiDocumentText,
   HiBookOpen,
   HiPresentationChartLine,
+  HiSparkles,
   HiInformationCircle,
   HiPhone,
   HiArrowRightOnRectangle,
+  HiBookmarkSquare,
 } from 'react-icons/hi2';
 
 export default function Sidebar() {
@@ -36,27 +36,28 @@ export default function Sidebar() {
 
   const portalNavItems = [
     { to: '/dashboard', label: 'Portal Dashboard', icon: HiChartBarSquare },
+    { to: '/clinic-settings', label: 'Registered Clinic Setup', icon: HiBuildingOffice2 },
+    { to: '/dentists', label: 'Dentists Roster', icon: HiUserGroup },
     { to: '/patients', label: 'Patient Directory', icon: HiUsers },
-    { to: '/conversations', label: 'AI Call Logs', icon: HiDocumentText },
-    { to: '/knowledge', label: 'RAG Knowledge Base', icon: HiBookOpen },
-    { to: '/analytics', label: 'Analytics & Reports', icon: HiPresentationChartLine },
+    { to: '/conversations', label: 'AI Call & Chat Logs', icon: HiDocumentText },
+    { to: '/knowledge', label: 'RAG Knowledge Index', icon: HiBookOpen },
+    { to: '/analytics', label: 'Analytics & Telemetry', icon: HiPresentationChartLine },
   ];
 
   const websiteNavItems = [
-    { to: '/', label: 'Main Website Theme', icon: HiGlobeAlt, end: true },
-    { to: '/chat', label: 'Patient AI Assistant', icon: HiChatBubbleLeftRight, highlight: true },
-    { to: '/appointments', label: 'Appointments', icon: HiCalendarDays },
-    { to: '/services', label: 'Services & Rates', icon: HiBookmarkSquare },
-    { to: '/dentists', label: 'Dentist Roster', icon: HiUserGroup },
-    { to: '/about', label: 'About Clinic', icon: HiInformationCircle },
-    { to: '/contact', label: 'Contact Us', icon: HiPhone },
+    { to: '/', label: 'SaaS Platform Home', icon: HiGlobeAlt, end: true },
+    { to: '/register-clinic', label: 'Register Clinic Tool', icon: HiBuildingOffice2, highlight: true },
+    { to: '/pricing', label: 'Pricing & Premium Plans', icon: HiSparkles },
+    { to: '/services', label: 'Capabilities Catalog', icon: HiBookmarkSquare },
+    { to: '/about', label: 'About Platform', icon: HiInformationCircle },
+    { to: '/contact', label: 'Contact Sales', icon: HiPhone },
   ];
 
   return (
     <aside className="bg-[#090d1a] text-slate-300 p-4 flex flex-col gap-4 border-r border-slate-800/90 select-none overflow-y-auto h-full">
       {/* Brand Header */}
       <NavLink to="/" className="px-1 py-1">
-        <Logo variant="full" size="md" subtitle="AI Dental Portal" />
+        <Logo variant="full" size="md" subtitle="AI Dental SaaS Suite" />
       </NavLink>
 
       {/* User Persona Badge */}
@@ -92,7 +93,7 @@ export default function Sidebar() {
         {/* Portal Operations Group */}
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest px-3 mb-1 font-heading">
-            Staff Portal
+            Clinic Staff Portal
           </span>
           {portalNavItems.map((item) => {
             const Icon = item.icon;
@@ -118,7 +119,7 @@ export default function Sidebar() {
         {/* Website Pages Group */}
         <div className="flex flex-col gap-1 pt-2 border-t border-slate-800/80">
           <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest px-3 mb-1 font-heading">
-            Clinic Website
+            Platform Navigation
           </span>
           {websiteNavItems.map((item) => {
             const Icon = item.icon;

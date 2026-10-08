@@ -5,9 +5,12 @@ import PortalLayout from './components/layout/PortalLayout';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import AuthGuard from './features/auth/AuthGuard';
 
-// Lazy loading individual feature page components for code-splitting
+// Lazy loading feature page components
 const LoginPage = lazy(() => import('./features/auth/LoginPage'));
 const HomePage = lazy(() => import('./features/home/HomePage'));
+const RegisterClinicPage = lazy(() => import('./features/clinic/RegisterClinicPage'));
+const PricingPage = lazy(() => import('./features/pricing/PricingPage'));
+const ClinicSettingsPage = lazy(() => import('./features/clinic/ClinicSettingsPage'));
 const DashboardPage = lazy(() => import('./features/dashboard/DashboardPage'));
 const ChatPage = lazy(() => import('./features/chat/ChatPage'));
 const AppointmentsPage = lazy(() => import('./features/appointments/AppointmentsPage'));
@@ -32,7 +35,7 @@ export const router = createBrowserRouter([
     path: '/login',
     element: withSuspense(LoginPage),
   },
-  // Public Website Theme Routes (Accessible by everyone)
+  // Public SaaS Platform Website Routes
   {
     path: '/',
     element: <PublicLayout />,
@@ -42,12 +45,16 @@ export const router = createBrowserRouter([
         element: withSuspense(HomePage),
       },
       {
-        path: 'services',
-        element: withSuspense(ServicesPage),
+        path: 'register-clinic',
+        element: withSuspense(RegisterClinicPage),
       },
       {
-        path: 'dentists',
-        element: withSuspense(DentistsPage),
+        path: 'pricing',
+        element: withSuspense(PricingPage),
+      },
+      {
+        path: 'services',
+        element: withSuspense(ServicesPage),
       },
       {
         path: 'chat',
@@ -67,7 +74,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Protected Staff & Management Portal Routes (Requires AuthGuard)
+  // Protected Dental Staff & Clinic Management Portal Routes (Requires AuthGuard)
   {
     path: '/',
     element: (
@@ -79,6 +86,14 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: withSuspense(DashboardPage),
+      },
+      {
+        path: 'clinic-settings',
+        element: withSuspense(ClinicSettingsPage),
+      },
+      {
+        path: 'dentists',
+        element: withSuspense(DentistsPage),
       },
       {
         path: 'patients',

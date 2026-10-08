@@ -4,10 +4,9 @@ import { useAuth } from '../../features/auth/AuthContext';
 import Logo from '../common/Logo';
 import {
   HiHome,
+  HiBuildingOffice2,
+  HiSparkles,
   HiBookmarkSquare,
-  HiUserGroup,
-  HiChatBubbleLeftRight,
-  HiCalendarDays,
   HiInformationCircle,
   HiPhone,
   HiChartBarSquare,
@@ -24,12 +23,11 @@ export default function Navbar() {
 
   const navItems = [
     { to: '/', label: 'Home', icon: HiHome, end: true },
-    { to: '/services', label: 'Services & Rates', icon: HiBookmarkSquare },
-    { to: '/dentists', label: 'Dentists', icon: HiUserGroup },
-    { to: '/chat', label: 'AI Receptionist', icon: HiChatBubbleLeftRight, highlight: true },
-    { to: '/appointments', label: 'Book Visit', icon: HiCalendarDays },
-    { to: '/about', label: 'About', icon: HiInformationCircle },
-    { to: '/contact', label: 'Contact', icon: HiPhone },
+    { to: '/register-clinic', label: 'Register Clinic', icon: HiBuildingOffice2, highlight: true },
+    { to: '/pricing', label: 'Pricing & Plans', icon: HiSparkles },
+    { to: '/services', label: 'Services & Capabilities', icon: HiBookmarkSquare },
+    { to: '/about', label: 'About Platform', icon: HiInformationCircle },
+    { to: '/contact', label: 'Contact Sales', icon: HiPhone },
   ];
 
   return (
@@ -69,6 +67,14 @@ export default function Navbar() {
 
         {/* Right Action Buttons */}
         <div className="hidden sm:flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => navigate('/register-clinic')}
+            className="btn-shimmer px-3.5 py-2 rounded-xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 text-slate-950 font-bold text-xs shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer hover:scale-[1.02]"
+          >
+            <HiBuildingOffice2 className="text-sm" />
+            <span>Register Clinic</span>
+          </button>
+
           {user ? (
             <div className="flex items-center gap-2">
               <button
@@ -76,7 +82,7 @@ export default function Navbar() {
                 className="btn-shimmer px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-teal-600 hover:from-indigo-500 hover:to-teal-500 text-white text-xs font-semibold shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <HiChartBarSquare className="text-base text-indigo-200" />
-                <span>Portal Dashboard</span>
+                <span>Clinic Portal</span>
               </button>
 
               <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-xl">
@@ -98,10 +104,10 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => navigate('/login')}
-              className="btn-shimmer px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-semibold text-xs shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer hover:scale-[1.02]"
+              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
             >
-              <HiLockClosed className="text-sm" />
-              <span>Sign In to Portal</span>
+              <HiLockClosed className="text-sm text-indigo-400" />
+              <span>Portal Sign In</span>
             </button>
           )}
         </div>
@@ -141,6 +147,17 @@ export default function Navbar() {
           })}
 
           <div className="pt-3 border-t border-slate-800 flex flex-col gap-2 mt-2">
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                navigate('/register-clinic');
+              }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md"
+            >
+              <HiBuildingOffice2 className="text-base" />
+              <span>Register Your Clinic Now</span>
+            </button>
+
             {user ? (
               <>
                 <button
@@ -151,7 +168,7 @@ export default function Navbar() {
                   className="w-full py-3 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg"
                 >
                   <HiChartBarSquare className="text-base" />
-                  <span>Open Portal Dashboard</span>
+                  <span>Open Clinic Portal</span>
                 </button>
                 <button
                   onClick={() => {
@@ -170,9 +187,9 @@ export default function Navbar() {
                   setMobileOpen(false);
                   navigate('/login');
                 }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold text-xs flex items-center justify-center gap-2 shadow-md"
+                className="w-full py-3 rounded-xl bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700"
               >
-                <HiLockClosed className="text-base" />
+                <HiLockClosed className="text-base text-indigo-400" />
                 <span>Sign In to Portal</span>
               </button>
             )}
