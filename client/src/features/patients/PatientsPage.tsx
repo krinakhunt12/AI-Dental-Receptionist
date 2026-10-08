@@ -89,8 +89,8 @@ export default function PatientsPage() {
                         {p.preferredDentist === 'patel'
                           ? 'Dr. Patel'
                           : p.preferredDentist === 'shah'
-                          ? 'Dr. Shah'
-                          : 'Staff Dentist'}
+                            ? 'Dr. Shah'
+                            : 'Staff Dentist'}
                       </span>
                     </span>
                   </td>

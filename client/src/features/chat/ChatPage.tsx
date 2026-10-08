@@ -131,11 +131,10 @@ export default function ChatPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                voiceEnabled
-                  ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${voiceEnabled
+                ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}
             >
               <span>{voiceEnabled ? '🔊 Voice On' : '🔇 Voice Off'}</span>
             </button>
@@ -147,18 +146,16 @@ export default function ChatPage() {
           {msgs.map((m, i) => (
             <div
               key={i}
-              className={`flex flex-col ${
-                m.role === 'user' ? 'items-end' : 'items-start'
-              }`}
+              className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'
+                }`}
             >
               <div
-                className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 text-xs md:text-sm leading-relaxed shadow-xs ${
-                  m.role === 'user'
-                    ? 'bg-teal-600 text-white rounded-br-none'
-                    : m.error
+                className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 text-xs md:text-sm leading-relaxed shadow-xs ${m.role === 'user'
+                  ? 'bg-teal-600 text-white rounded-br-none'
+                  : m.error
                     ? 'bg-rose-50 text-rose-800 border border-rose-200 rounded-bl-none'
                     : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-none shadow-sm'
-                }`}
+                  }`}
               >
                 {m.content}
 
@@ -217,11 +214,10 @@ export default function ChatPage() {
           <button
             type="button"
             onClick={startListening}
-            className={`p-3 rounded-xl border transition cursor-pointer shrink-0 ${
-              listening
-                ? 'bg-rose-50 text-rose-600 border-rose-300 animate-pulse'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200'
-            }`}
+            className={`p-3 rounded-xl border transition cursor-pointer shrink-0 ${listening
+              ? 'bg-rose-50 text-rose-600 border-rose-300 animate-pulse'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200'
+              }`}
             title="Speak with Microphone"
           >
             🎙️

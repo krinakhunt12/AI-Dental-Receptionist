@@ -70,9 +70,8 @@ export default function Sidebar() {
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-slate-200 truncate">{user.name}</span>
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border w-fit capitalize mt-0.5 ${
-                  roleColors[user.role] || 'bg-slate-700 text-slate-300'
-                }`}
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border w-fit capitalize mt-0.5 ${roleColors[user.role] || 'bg-slate-700 text-slate-300'
+                  }`}
               >
                 {roleLabels[user.role] ?? user.role}
               </span>
@@ -102,45 +101,13 @@ export default function Sidebar() {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all ${
-                    isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 font-bold'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
+                  `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all ${isActive
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/40 font-bold'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
                   }`
                 }
               >
                 <Icon className="text-lg shrink-0 text-indigo-400" />
-                <span className="truncate">{item.label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-
-        {/* Website Pages Group */}
-        <div className="flex flex-col gap-1 pt-2 border-t border-slate-800/80">
-          <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest px-3 mb-1 font-heading">
-            Platform Navigation
-          </span>
-          {websiteNavItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all ${
-                    isActive
-                      ? item.highlight
-                        ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md shadow-teal-900/40 font-bold'
-                        : 'bg-slate-800 text-teal-400 border border-slate-700/80 font-bold'
-                      : item.highlight
-                      ? 'text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 font-bold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`
-                }
-              >
-                <Icon className="text-lg shrink-0" />
                 <span className="truncate">{item.label}</span>
               </NavLink>
             );
@@ -153,9 +120,8 @@ export default function Sidebar() {
         <div className="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-medium">
             <span
-              className={`w-2 h-2 rounded-full ${
-                offline ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'
-              }`}
+              className={`w-2 h-2 rounded-full ${offline ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'
+                }`}
             />
             <span>{offline ? 'Backend Offline' : 'AI Engine Live'}</span>
           </span>

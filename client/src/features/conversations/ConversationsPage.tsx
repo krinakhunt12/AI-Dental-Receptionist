@@ -64,13 +64,12 @@ export default function ConversationsPage() {
                   Intent: {c.intent}
                 </span>
                 <span
-                  className={`text-xs font-extrabold px-3 py-1 rounded-full border ${
-                    c.status === 'Confirmed'
+                  className={`text-xs font-extrabold px-3 py-1 rounded-full border ${c.status === 'Confirmed'
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                       : c.status === 'Transferred'
-                      ? 'bg-rose-50 text-rose-800 border-rose-200'
-                      : 'bg-blue-50 text-blue-800 border-blue-200'
-                  }`}
+                        ? 'bg-rose-50 text-rose-800 border-rose-200'
+                        : 'bg-blue-50 text-blue-800 border-blue-200'
+                    }`}
                 >
                   {c.status}
                 </span>
