@@ -78,6 +78,7 @@ model Clinic {
   email         String
   phone         String
   address       String?
+  logoUrl       String?
   timezone      String         @default("UTC")
   isActive      Boolean        @default(true)
   deletedAt     DateTime?
@@ -100,24 +101,26 @@ model Clinic {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  clinicId     String?
-  clinic       Clinic?    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  email        String     @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         Role       @default(STAFF)
-  phone        String?
-  isActive     Boolean    @default(true)
-  deletedAt    DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                  String               @id @default(uuid())
+  clinicId            String?
+  clinic              Clinic?              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  email               String
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                Role                 @default(STAFF)
+  phone               String?
+  isActive            Boolean              @default(true)
+  deletedAt           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
-  doctorProfile Doctor?
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]
+  doctorProfile       Doctor?
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  auditLogs           AuditLog[]
 
+  @@unique([clinicId, email])
   @@index([clinicId])
   @@index([email])
 }
@@ -129,6 +132,19 @@ model RefreshToken {
   token     String   @unique
   expiresAt DateTime
   revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId])

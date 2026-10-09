@@ -25,7 +25,7 @@ export const validateRequest = (schema: ZodSchema<any>) => {
           field: Array.isArray(e.path) ? e.path.join('.').replace(/^(body|query|params)\./, '') : '',
           message: e.message,
         }));
-        return next(ApiError.badRequest('Validation failed', formattedErrors));
+        return next(ApiError.badRequest('Validation failed', formattedErrors, 'VALIDATION_ERROR'));
       }
       next(error);
     }

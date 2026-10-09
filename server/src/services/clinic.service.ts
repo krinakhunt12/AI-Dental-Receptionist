@@ -1,72 +1,132 @@
 import { prisma } from '../prisma.js';
 import { ApiError } from '../utils/apiError.js';
-import bcrypt from 'bcryptjs';
-import { Role } from '@prisma/client';
+
+export interface UpdateClinicInput {
+  name?: string;
+  phone?: string;
+  address?: string;
+  timezone?: string;
+  logoUrl?: string;
+  workingHours?: Array<{
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    isClosed?: boolean;
+  }>;
+}
 
 export class ClinicService {
   static async getClinicProfile(clinicId: string) {
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
       include: {
+        workingHours: {
+          orderBy: { dayOfWeek: 'asc' },
+        },
         subscriptions: {
           include: { plan: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        _count: {
+          select: {
+            users: true,
+            doctors: true,
+            patients: true,
+          },
         },
       },
     });
 
     if (!clinic || clinic.deletedAt) {
-      throw ApiError.notFound('Clinic not found');
+      throw ApiError.notFound('Clinic not found', 'CLINIC_NOT_FOUND');
     }
 
     return clinic;
   }
 
-  static async updateClinicProfile(clinicId: string, data: { name?: string; phone?: string; address?: string; timezone?: string }) {
-    const clinic = await prisma.clinic.update({
-      where: { id: clinicId },
-      data,
+  static async updateClinicProfile(clinicId: string, input: UpdateClinicInput) {
+    const existing = await prisma.clinic.findUnique({ where: { id: clinicId } });
+    if (!existing || existing.deletedAt) {
+      throw ApiError.notFound('Clinic not found', 'CLINIC_NOT_FOUND');
+    }
+
+    const { workingHours, ...clinicData } = input;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedClinic = await tx.clinic.update({
+        where: { id: clinicId },
+        data: clinicData,
+      });
+
+      if (workingHours && Array.isArray(workingHours)) {
+        // Delete existing clinic working hours (where doctorId is null)
+        await tx.workingHours.deleteMany({
+          where: { clinicId, doctorId: null },
+        });
+
+        // Insert new working hours
+        if (workingHours.length > 0) {
+          await tx.workingHours.createMany({
+            data: workingHours.map((wh) => ({
+              clinicId,
+              dayOfWeek: wh.dayOfWeek,
+              startTime: wh.startTime,
+              endTime: wh.endTime,
+              isClosed: wh.isClosed || false,
+            })),
+          });
+        }
+      }
+
+      return tx.clinic.findUnique({
+        where: { id: clinicId },
+        include: { workingHours: { orderBy: { dayOfWeek: 'asc' } } },
+      });
     });
-    return clinic;
+
+    return result;
   }
 
-  // Clinic user management
-  static async listClinicUsers(clinicId: string, page = 1, limit = 10, search?: string) {
+  // SUPER_ADMIN methods
+  static async listAllClinics(page = 1, limit = 10, search?: string, isActive?: boolean) {
     const skip = (page - 1) * limit;
-    const where: any = {
-      clinicId,
-      deletedAt: null,
-    };
+    const where: any = { deletedAt: null };
+
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
 
     if (search) {
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
+    const [clinics, total] = await Promise.all([
+      prisma.clinic.findMany({
         where,
         skip,
         take: limit,
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          phone: true,
-          isActive: true,
-          createdAt: true,
+        include: {
+          subscriptions: {
+            include: { plan: true },
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
+          _count: {
+            select: { users: true, doctors: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.user.count({ where }),
+      prisma.clinic.count({ where }),
     ]);
 
     return {
-      users,
+      clinics,
       pagination: {
         total,
         page,
@@ -76,34 +136,17 @@ export class ClinicService {
     };
   }
 
-  static async createClinicUser(clinicId: string, data: { firstName: string; lastName: string; email: string; password: string; role: Role; phone?: string }) {
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) {
-      throw ApiError.conflict('Email is already registered');
+  static async updateClinicStatus(clinicId: string, isActive: boolean) {
+    const clinic = await prisma.clinic.findUnique({ where: { id: clinicId } });
+    if (!clinic || clinic.deletedAt) {
+      throw ApiError.notFound('Clinic not found', 'CLINIC_NOT_FOUND');
     }
 
-    const passwordHash = await bcrypt.hash(data.password, 12);
-    const user = await prisma.user.create({
-      data: {
-        clinicId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        passwordHash,
-        role: data.role,
-        phone: data.phone,
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        phone: true,
-        createdAt: true,
-      },
+    const updated = await prisma.clinic.update({
+      where: { id: clinicId },
+      data: { isActive },
     });
 
-    return user;
+    return updated;
   }
 }

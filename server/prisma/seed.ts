@@ -6,7 +6,10 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // 1. Seed Plans
+  // Password for all seed users: Password123!
+  const passwordHash = await bcrypt.hash('Password123!', 10);
+
+  // 0. Seed Plans
   const freePlan = await prisma.plan.upsert({
     where: { code: 'FREE_TRIAL' },
     update: {},
@@ -54,7 +57,53 @@ async function main() {
 
   console.log('✅ Plans seeded:', [freePlan.code, basicPlan.code, proPlan.code]);
 
-  const passwordHash = await bcrypt.hash('Password123!', 10);
+  // 1. Seed SUPER_ADMIN
+  let superAdmin = await prisma.user.findFirst({
+    where: { email: 'superadmin@smilecare.com', clinicId: null },
+  });
+  if (!superAdmin) {
+    superAdmin = await prisma.user.create({
+      data: {
+        clinicId: null,
+        email: 'superadmin@smilecare.com',
+        passwordHash,
+        firstName: 'System',
+        lastName: 'SuperAdmin',
+        role: Role.SUPER_ADMIN,
+      },
+    });
+  } else {
+    superAdmin = await prisma.user.update({
+      where: { id: superAdmin.id },
+      data: { passwordHash },
+    });
+  }
+  console.log('✅ Super Admin seeded:', superAdmin.email);
+
+  // Helper function to seed user for a clinic
+  const seedClinicUser = async (clinicId: string, email: string, firstName: string, lastName: string, role: Role) => {
+    let user = await prisma.user.findFirst({
+      where: { clinicId, email },
+    });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          clinicId,
+          email,
+          passwordHash,
+          firstName,
+          lastName,
+          role,
+        },
+      });
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, role },
+      });
+    }
+    return user;
+  };
 
   // 2. Sample Clinic 1: SmileCare Downtown
   const clinic1 = await prisma.clinic.upsert({
@@ -70,19 +119,10 @@ async function main() {
     },
   });
 
-  // Admin user for Clinic 1
-  const user1 = await prisma.user.upsert({
-    where: { email: 'admin@smilecaredowntown.com' },
-    update: {},
-    create: {
-      clinicId: clinic1.id,
-      email: 'admin@smilecaredowntown.com',
-      passwordHash,
-      firstName: 'Sarah',
-      lastName: 'Jenkins',
-      role: Role.CLINIC_ADMIN,
-    },
-  });
+  // Users for Clinic 1
+  const user1Admin = await seedClinicUser(clinic1.id, 'admin@smilecaredowntown.com', 'Sarah', 'Jenkins', Role.CLINIC_ADMIN);
+  const user1Doctor = await seedClinicUser(clinic1.id, 'doctor@smilecaredowntown.com', 'Michael', 'Vance', Role.DOCTOR);
+  const user1Staff = await seedClinicUser(clinic1.id, 'staff@smilecaredowntown.com', 'Emily', 'Davis', Role.STAFF);
 
   // Subscription for Clinic 1
   await prisma.subscription.upsert({
@@ -98,62 +138,30 @@ async function main() {
     },
   });
 
-  // Doctor 1 for Clinic 1
-  const doctor1 = await prisma.doctor.create({
-    data: {
-      clinicId: clinic1.id,
-      name: 'Dr. Michael Vance',
-      specialty: 'Orthodontics & General Dentistry',
-      email: 'dr.vance@smilecaredowntown.com',
-      phone: '+1-555-0101',
-      workingHours: {
-        create: [1, 2, 3, 4, 5].map((day) => ({
-          clinicId: clinic1.id,
-          dayOfWeek: day,
-          startTime: '09:00',
-          endTime: '17:00',
-        })),
+  // Doctor profile for Clinic 1
+  const existingDoc1 = await prisma.doctor.findFirst({ where: { clinicId: clinic1.id, name: 'Dr. Michael Vance' } });
+  if (!existingDoc1) {
+    await prisma.doctor.create({
+      data: {
+        clinicId: clinic1.id,
+        userId: user1Doctor.id,
+        name: 'Dr. Michael Vance',
+        specialty: 'Orthodontics & General Dentistry',
+        email: 'doctor@smilecaredowntown.com',
+        phone: '+1-555-0101',
+        workingHours: {
+          create: [1, 2, 3, 4, 5].map((day) => ({
+            clinicId: clinic1.id,
+            dayOfWeek: day,
+            startTime: '09:00',
+            endTime: '17:00',
+          })),
+        },
       },
-    },
-  });
+    });
+  }
 
-  // Patient 1 for Clinic 1
-  const patient1 = await prisma.patient.create({
-    data: {
-      clinicId: clinic1.id,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'johndoe@example.com',
-      phone: '+1-555-0202',
-    },
-  });
-
-  // Service 1
-  const service1 = await prisma.service.create({
-    data: {
-      clinicId: clinic1.id,
-      name: 'Routine Teeth Cleaning & Exam',
-      durationMins: 45,
-      price: 120.00,
-    },
-  });
-
-  // Appointment for Clinic 1
-  await prisma.appointment.create({
-    data: {
-      clinicId: clinic1.id,
-      doctorId: doctor1.id,
-      patientId: patient1.id,
-      serviceId: service1.id,
-      startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-      endTime: new Date(Date.now() + (24 * 60 + 45) * 60 * 1000),
-      status: AppointmentStatus.SCHEDULED,
-      source: AppointmentSource.AI,
-      notes: 'Booked via 24/7 AI Receptionist Chatbot',
-    },
-  });
-
-  console.log('✅ Clinic 1 seeded:', clinic1.name);
+  console.log('✅ Clinic 1 seeded:', clinic1.name, '(Admin, Doctor, Staff)');
 
   // 3. Sample Clinic 2: Apex Dental Care
   const clinic2 = await prisma.clinic.upsert({
@@ -169,19 +177,12 @@ async function main() {
     },
   });
 
-  const user2 = await prisma.user.upsert({
-    where: { email: 'admin@apexdental.com' },
-    update: {},
-    create: {
-      clinicId: clinic2.id,
-      email: 'admin@apexdental.com',
-      passwordHash,
-      firstName: 'Robert',
-      lastName: 'Smith',
-      role: Role.CLINIC_ADMIN,
-    },
-  });
+  // Users for Clinic 2
+  const user2Admin = await seedClinicUser(clinic2.id, 'admin@apexdental.com', 'Robert', 'Smith', Role.CLINIC_ADMIN);
+  const user2Doctor = await seedClinicUser(clinic2.id, 'doctor@apexdental.com', 'Emily', 'Watson', Role.DOCTOR);
+  const user2Staff = await seedClinicUser(clinic2.id, 'staff@apexdental.com', 'James', 'Wilson', Role.STAFF);
 
+  // Subscription for Clinic 2
   await prisma.subscription.upsert({
     where: { clinicId: clinic2.id },
     update: {},
@@ -195,48 +196,30 @@ async function main() {
     },
   });
 
-  const doctor2 = await prisma.doctor.create({
-    data: {
-      clinicId: clinic2.id,
-      name: 'Dr. Emily Watson',
-      specialty: 'Pediatric & Cosmetic Dentistry',
-      email: 'dr.watson@apexdental.com',
-      phone: '+1-555-0301',
-      workingHours: {
-        create: [1, 2, 3, 4, 5].map((day) => ({
-          clinicId: clinic2.id,
-          dayOfWeek: day,
-          startTime: '10:00',
-          endTime: '18:00',
-        })),
+  // Doctor profile for Clinic 2
+  const existingDoc2 = await prisma.doctor.findFirst({ where: { clinicId: clinic2.id, name: 'Dr. Emily Watson' } });
+  if (!existingDoc2) {
+    await prisma.doctor.create({
+      data: {
+        clinicId: clinic2.id,
+        userId: user2Doctor.id,
+        name: 'Dr. Emily Watson',
+        specialty: 'Pediatric & Cosmetic Dentistry',
+        email: 'doctor@apexdental.com',
+        phone: '+1-555-0301',
+        workingHours: {
+          create: [1, 2, 3, 4, 5].map((day) => ({
+            clinicId: clinic2.id,
+            dayOfWeek: day,
+            startTime: '10:00',
+            endTime: '18:00',
+          })),
+        },
       },
-    },
-  });
+    });
+  }
 
-  const patient2 = await prisma.patient.create({
-    data: {
-      clinicId: clinic2.id,
-      firstName: 'Alice',
-      lastName: 'Johnson',
-      email: 'alice@example.com',
-      phone: '+1-555-0303',
-    },
-  });
-
-  await prisma.appointment.create({
-    data: {
-      clinicId: clinic2.id,
-      doctorId: doctor2.id,
-      patientId: patient2.id,
-      startTime: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      endTime: new Date(Date.now() + (48 * 60 + 30) * 60 * 1000),
-      status: AppointmentStatus.SCHEDULED,
-      source: AppointmentSource.PHONE,
-      notes: 'Voice AI phone call booking',
-    },
-  });
-
-  console.log('✅ Clinic 2 seeded:', clinic2.name);
+  console.log('✅ Clinic 2 seeded:', clinic2.name, '(Admin, Doctor, Staff)');
   console.log('🎉 Seeding completed successfully!');
 }
 
