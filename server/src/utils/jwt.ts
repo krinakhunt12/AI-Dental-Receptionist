@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { config } from '../config/index.js';
 
 export interface TokenPayload {
@@ -6,6 +7,7 @@ export interface TokenPayload {
   clinicId: string | null;
   role: string;
   email: string;
+  jti?: string;
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
@@ -15,9 +17,13 @@ export const generateAccessToken = (payload: TokenPayload): string => {
 };
 
 export const generateRefreshToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, config.JWT_REFRESH_SECRET, {
-    expiresIn: config.JWT_REFRESH_EXPIRES_IN as any,
-  });
+  return jwt.sign(
+    { ...payload, jti: crypto.randomUUID() },
+    config.JWT_REFRESH_SECRET,
+    {
+      expiresIn: config.JWT_REFRESH_EXPIRES_IN as any,
+    }
+  );
 };
 
 export const verifyAccessToken = (token: string): TokenPayload => {
