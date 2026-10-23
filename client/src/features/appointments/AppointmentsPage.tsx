@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAppointmentsQuery } from './hooks/useAppointmentsQuery';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { type Status } from '../../api';
+import { Skeleton } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 
-const STATUSES: { v: Status; label: string }[] = [
-  { v: 'booked', label: 'Booked' },
-  { v: 'completed', label: 'Completed' },
-  { v: 'cancelled', label: 'Cancelled' },
-  { v: 'no_show', label: 'No-show' },
+const STATUSES: { v: string; label: string }[] = [
+  { v: 'Confirmed', label: 'Confirmed' },
+  { v: 'Pending', label: 'Pending' },
+  { v: 'Completed', label: 'Completed' },
+  { v: 'Cancelled', label: 'Cancelled' },
+  { v: 'No-show', label: 'No-show' },
 ];
 
 export default function AppointmentsPage() {
@@ -16,6 +18,7 @@ export default function AppointmentsPage() {
     services,
     dentists,
     isLoading,
+    isError,
     isRefetching,
     refetch,
     createAppointment,
@@ -33,20 +36,16 @@ export default function AppointmentsPage() {
   const [patientPhone, setPatientPhone] = useState('');
   const [serviceId, setServiceId] = useState('');
   const [dentistId, setDentistId] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
   const [time, setTime] = useState('10:00');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (services.length && !serviceId) setServiceId(services[0].id);
-    if (dentists.length && !dentistId) setDentistId(dentists[0].id);
-  }, [services, dentists, serviceId, dentistId]);
-
-  useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setDate(tomorrow.toISOString().split('T')[0]);
-  }, []);
+  const activeServiceId = serviceId || (services[0]?.id ?? '');
+  const activeDentistId = dentistId || (dentists[0]?.id ?? '');
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -59,8 +58,8 @@ export default function AppointmentsPage() {
     setError('');
     try {
       await createAppointment({
-        serviceId: serviceId || (services[0]?.id ?? ''),
-        dentistId: dentistId || (dentists[0]?.id ?? ''),
+        serviceId: activeServiceId,
+        dentistId: activeDentistId,
         date,
         time,
         patientName,
@@ -69,43 +68,46 @@ export default function AppointmentsPage() {
       setShowModal(false);
       setPatientName('');
       setPatientPhone('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Booking failed.');
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ||
+        'Failed to book appointment. Please check availability.';
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (isLoading) {
-    return <LoadingSpinner message="Loading Appointments & Schedule…" />;
-  }
-
-  const totalBooked = rows.filter((r) => r.status === 'booked').length;
-  const totalCompleted = rows.filter((r) => r.status === 'completed').length;
-  const totalCancelled = rows.filter((r) => r.status === 'cancelled' || r.status === 'no_show').length;
-
-  const filteredRows = rows.filter((r) => {
-    const matchesStatus = filter === 'all' || r.status === filter;
-    const searchLower = search.toLowerCase();
+  const filteredRows = rows.filter((a) => {
+    const matchesFilter = filter === 'all' || a.status.toLowerCase() === filter.toLowerCase();
+    const q = search.toLowerCase();
+    const serviceName = a.treatment || '';
+    const doctorName = a.doctorName || '';
     const matchesSearch =
-      !search ||
-      r.patientName.toLowerCase().includes(searchLower) ||
-      (r.serviceName ?? '').toLowerCase().includes(searchLower) ||
-      (r.dentistName ?? '').toLowerCase().includes(searchLower) ||
-      r.patientPhone.includes(search);
-    return matchesStatus && matchesSearch;
+      !q ||
+      a.patientName.toLowerCase().includes(q) ||
+      serviceName.toLowerCase().includes(q) ||
+      doctorName.toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
   });
 
-  const getStatusColor = (status: Status) => {
+  const totalBooked = rows.filter((a) => a.status === 'Confirmed' || a.status === 'Pending').length;
+  const totalCompleted = rows.filter((a) => a.status === 'Completed').length;
+  const totalCancelled = rows.filter((a) => a.status === 'Cancelled' || a.status === 'No-show').length;
+
+  const getStatusColor = (status: string) => {
     switch (status) {
+      case 'Confirmed':
       case 'booked':
-        return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        return 'bg-emerald-50 text-emerald-800 border-emerald-300';
+      case 'Completed':
       case 'completed':
-        return 'bg-blue-50 text-blue-800 border-blue-200';
+        return 'bg-blue-50 text-blue-800 border-blue-300';
+      case 'Cancelled':
       case 'cancelled':
-        return 'bg-rose-50 text-rose-800 border-rose-200';
-      case 'no_show':
-        return 'bg-amber-50 text-amber-800 border-amber-200';
+        return 'bg-rose-50 text-rose-800 border-rose-300';
+      case 'Pending':
+        return 'bg-amber-50 text-amber-800 border-amber-300';
       default:
         return 'bg-slate-100 text-slate-700 border-slate-200';
     }
@@ -192,10 +194,10 @@ export default function AppointmentsPage() {
             onChange={(e) => setFilter(e.target.value)}
           >
             <option value="all">All Statuses ({rows.length})</option>
-            <option value="booked">Booked ({totalBooked})</option>
-            <option value="completed">Completed ({totalCompleted})</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
-            <option value="no_show">No-Show</option>
           </select>
 
           <button
@@ -214,73 +216,101 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Appointments Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              <th className="p-4">Date & Time</th>
-              <th className="p-4">Patient Information</th>
-              <th className="p-4">Requested Service</th>
-              <th className="p-4">Assigned Dentist</th>
-              <th className="p-4">Status & Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 text-sm">
-            {filteredRows.map((a) => (
-              <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
-                <td className="p-4">
-                  <div className="font-bold text-slate-900">{a.date}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">🕒 {a.start} - {a.end}</div>
-                </td>
-                <td className="p-4">
-                  <div className="font-semibold text-slate-900">👤 {a.patientName}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">📞 {a.patientPhone}</div>
-                </td>
-                <td className="p-4">
-                  <span className="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200">
-                    🦷 {a.serviceName ?? 'General Service'}
-                  </span>
-                </td>
-                <td className="p-4 font-medium text-slate-800">
-                  👨‍⚕️ {a.dentistName ?? 'Staff Dentist'}
-                </td>
-                <td className="p-4 flex items-center gap-3">
-                  <select
-                    className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer outline-none transition-all ${getStatusColor(a.status)}`}
-                    value={a.status}
-                    onChange={(e) => updateStatus(a.id, e.target.value as Status)}
-                    aria-label={`Status for ${a.patientName}`}
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s.v} value={s.v}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <button
-                    className="text-slate-400 hover:text-rose-600 text-xs font-semibold cursor-pointer"
-                    onClick={() => deleteAppointment(a.id)}
-                    title="Delete appointment"
-                  >
-                    🗑️
-                  </button>
-                </td>
-              </tr>
+      {/* Loading Skeleton */}
+      {isLoading && (
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+          <Skeleton className="h-6 w-52" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
             ))}
-            {filteredRows.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center p-8 text-slate-400 text-sm">
-                  {rows.length === 0
-                    ? 'No appointments booked yet. Click "Book New Appointment" to create one!'
-                    : 'No appointments matched your search or status filter.'}
-                </td>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {!isLoading && isError && (
+        <ErrorState
+          title="Failed to load appointments"
+          message="Could not load appointment roster or clinical services. Please try again."
+          onRetry={() => refetch()}
+        />
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !isError && filteredRows.length === 0 && (
+        <EmptyState
+          title="No Appointments Found"
+          description={
+            rows.length === 0
+              ? 'No appointments are booked yet. Click "Book New Appointment" to create one!'
+              : 'No appointments match your search criteria.'
+          }
+          actionLabel="Book New Appointment"
+          onAction={() => setShowModal(true)}
+        />
+      )}
+
+      {/* Appointments Table */}
+      {!isLoading && !isError && filteredRows.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="p-4">Date & Time</th>
+                <th className="p-4">Patient Information</th>
+                <th className="p-4">Requested Service</th>
+                <th className="p-4">Assigned Dentist</th>
+                <th className="p-4">Status & Action</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-200 text-sm">
+              {filteredRows.map((a) => (
+                <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="p-4">
+                    <div className="font-bold text-slate-900">{a.date}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">🕒 {a.time}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className="font-semibold text-slate-900">👤 {a.patientName}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">📞 {a.patientPhone}</div>
+                  </td>
+                  <td className="p-4">
+                    <span className="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200">
+                      🦷 {a.treatment || 'General Service'}
+                    </span>
+                  </td>
+                  <td className="p-4 font-medium text-slate-800">
+                    👨‍⚕️ {a.doctorName || 'Staff Dentist'}
+                  </td>
+                  <td className="p-4 flex items-center gap-3">
+                    <select
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer outline-none transition-all ${getStatusColor(a.status)}`}
+                      value={a.status}
+                      onChange={(e) => updateStatus(a.id, e.target.value)}
+                      aria-label={`Status for ${a.patientName}`}
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s.v} value={s.v}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      className="text-slate-400 hover:text-rose-600 text-xs font-semibold cursor-pointer"
+                      onClick={() => deleteAppointment(a.id)}
+                      title="Cancel appointment"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* New Appointment Modal Form */}
       {showModal && (
@@ -319,11 +349,11 @@ export default function AppointmentsPage() {
                   <label className="text-xs font-bold text-slate-700 uppercase">Service Procedure</label>
                   <select
                     className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
-                    value={serviceId}
+                    value={activeServiceId}
                     onChange={(e) => setServiceId(e.target.value)}
                   >
                     {services.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name} (₹{s.priceInr})</option>
+                      <option key={s.id} value={s.id}>{s.name} (${s.price})</option>
                     ))}
                   </select>
                 </div>
@@ -332,11 +362,11 @@ export default function AppointmentsPage() {
                   <label className="text-xs font-bold text-slate-700 uppercase">Assigned Dentist</label>
                   <select
                     className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
-                    value={dentistId}
+                    value={activeDentistId}
                     onChange={(e) => setDentistId(e.target.value)}
                   >
                     {dentists.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name} ({d.specialization})</option>
+                      <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
                     ))}
                   </select>
                 </div>

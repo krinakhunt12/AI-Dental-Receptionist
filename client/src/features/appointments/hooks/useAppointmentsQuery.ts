@@ -1,59 +1,60 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, queryKeys, type Status } from '../../../api';
+import {
+  useAppointments,
+  useCreateAppointment,
+  useUpdateAppointment,
+  useCancelAppointment,
+} from '../api/useAppointments';
+import { useDentists } from '../../dentists/api/useDentists';
+import { useTreatments } from '../../treatments/api/useTreatments';
+import { AppointmentStatus } from '../../../types';
 
 export function useAppointmentsQuery() {
-  const queryClient = useQueryClient();
+  const apptsQuery = useAppointments();
+  const servicesQuery = useTreatments();
+  const dentistsQuery = useDentists();
 
-  const apptsQuery = useQuery({
-    queryKey: queryKeys.appointments,
-    queryFn: () => api.appointments(),
-  });
-
-  const servicesQuery = useQuery({
-    queryKey: queryKeys.services,
-    queryFn: () => api.services(),
-  });
-
-  const dentistsQuery = useQuery({
-    queryKey: queryKeys.dentists,
-    queryFn: () => api.dentists(),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (data: { serviceId: string; dentistId: string; date: string; time: string; patientName: string; patientPhone: string }) =>
-      api.createAppointment(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats });
-    },
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: Status }) => api.setStatus(id, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.deleteAppointment(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats });
-    },
-  });
+  const createMut = useCreateAppointment();
+  const updateMut = useUpdateAppointment();
+  const cancelMut = useCancelAppointment();
 
   return {
     appointments: apptsQuery.data ?? [],
     services: servicesQuery.data ?? [],
     dentists: dentistsQuery.data ?? [],
     isLoading: apptsQuery.isLoading || servicesQuery.isLoading || dentistsQuery.isLoading,
+    isError: apptsQuery.isError || servicesQuery.isError || dentistsQuery.isError,
     isRefetching: apptsQuery.isRefetching,
-    refetch: () => apptsQuery.refetch(),
-    createAppointment: (data: { serviceId: string; dentistId: string; date: string; time: string; patientName: string; patientPhone: string }) =>
-      createMutation.mutateAsync(data),
-    updateStatus: (id: string, status: Status) => updateStatusMutation.mutateAsync({ id, status }),
-    deleteAppointment: (id: string) => deleteMutation.mutateAsync(id),
+    refetch: () => {
+      apptsQuery.refetch();
+      servicesQuery.refetch();
+      dentistsQuery.refetch();
+    },
+    createAppointment: async (data: {
+      serviceId?: string;
+      dentistId: string;
+      date: string;
+      time: string;
+      patientName: string;
+      patientPhone: string;
+    }) => {
+      const treatment =
+        servicesQuery.data?.find((s) => s.id === data.serviceId)?.name || 'General Dental Checkup';
+      return createMut.mutateAsync({
+        treatment,
+        treatmentId: data.serviceId,
+        doctorId: data.dentistId,
+        date: data.date,
+        time: data.time,
+        patientName: data.patientName,
+        patientPhone: data.patientPhone,
+      });
+    },
+    updateStatus: (id: string, status: string) => {
+      return updateMut.mutateAsync({
+        id,
+        data: { status: status as AppointmentStatus },
+      });
+    },
+    deleteAppointment: (id: string) => cancelMut.mutateAsync(id),
   };
 }

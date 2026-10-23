@@ -11,7 +11,9 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
-import { useAddAppointmentMutation, useDoctorsQuery, usePatientsQuery } from '../api/mockClient';
+import { useCreateAppointment } from '../features/appointments/api';
+import { useDentists } from '../features/dentists/api';
+import { usePatients } from '../features/patients/api';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -77,9 +79,9 @@ export const AppLayout: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Quick Appointment Modal Form state
-  const { data: doctors = [] } = useDoctorsQuery();
-  const { data: patients = [] } = usePatientsQuery();
-  const addAptMutation = useAddAppointmentMutation();
+  const { data: doctors = [] } = useDentists();
+  const { data: patients = [] } = usePatients();
+  const addAptMutation = useCreateAppointment();
 
   const [aptPatientId, setAptPatientId] = useState('');
   const [aptDoctorId, setAptDoctorId] = useState(doctors[0]?.id || 'doc_1');
@@ -92,6 +94,11 @@ export const AppLayout: React.FC = () => {
     const selPat = patients.find((p) => p.id === aptPatientId) || patients[0];
     const selDoc = doctors.find((d) => d.id === aptDoctorId) || doctors[0];
 
+    if (!selPat || !selDoc) {
+      addToast({ type: 'warning', title: 'Please select a patient and doctor.' });
+      return;
+    }
+
     addAptMutation.mutate(
       {
         patientId: selPat.id,
@@ -103,7 +110,6 @@ export const AppLayout: React.FC = () => {
         date: aptDate,
         time: aptTime,
         durationMins: 45,
-        status: 'Confirmed',
         source: 'Website Widget',
       },
       {

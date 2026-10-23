@@ -1,15 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { api, queryKeys } from '../../../api';
+import { useDentists } from '../api/useDentists';
 
 export function useDentistsQuery() {
-  const query = useQuery({
-    queryKey: queryKeys.dentists,
-    queryFn: () => api.dentists(),
-  });
+  const query = useDentists();
 
   return {
     dentists: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
+    refetch: query.refetch,
   };
 }

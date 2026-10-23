@@ -14,6 +14,10 @@ import {
 } from '../mocks/seedData';
 import { useTenant } from '../app/TenantProvider';
 
+import { useAppointments } from '../features/appointments/api';
+import { useDentists } from '../features/dentists/api';
+import { usePatients } from '../features/patients/api';
+
 // Local memory store for interactive changes during runtime
 let appointmentsStore = [...SEED_APPOINTMENTS];
 let patientsStore = [...SEED_PATIENTS];
@@ -25,25 +29,11 @@ let gapsStore = [...SEED_AI_GAPS];
 // --- QUERIES ---
 
 export function useAppointmentsQuery() {
-  const { tenant } = useTenant();
-  return useQuery({
-    queryKey: ['appointments', tenant.id],
-    queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200)); // simulated latency
-      return [...appointmentsStore];
-    },
-  });
+  return useAppointments();
 }
 
 export function usePatientsQuery() {
-  const { tenant } = useTenant();
-  return useQuery({
-    queryKey: ['patients', tenant.id],
-    queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      return [...patientsStore];
-    },
-  });
+  return usePatients();
 }
 
 export function useConversationsQuery() {
@@ -59,14 +49,7 @@ export function useConversationsQuery() {
 }
 
 export function useDoctorsQuery() {
-  const { tenant } = useTenant();
-  return useQuery({
-    queryKey: ['doctors', tenant.id],
-    queryFn: async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      return [...doctorsStore];
-    },
-  });
+  return useDentists();
 }
 
 export function useInvoicesQuery() {

@@ -49,6 +49,17 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
 ---
 
+## 🔐 Client Authentication & Demo Mode
+
+The frontend authentication system (`client/src/app/AuthProvider.tsx`) features robust state hydration and environment configuration:
+
+- **`VITE_DEMO_MODE=true`**: Automatically falls back to `DEMO_USER` when local storage is empty, enabling instant evaluation without requiring manual credentials.
+- **`VITE_DEMO_MODE=false`** *(Production default)*: Requires actual authentication; unauthenticated visits cleanly redirect to `/login` without premature screen flash.
+- **Hydration Flag (`isHydrated`)**: Route guards render a full-screen skeleton while reading and validating persistent storage, eliminating flash of unauthenticated content.
+- **Storage Safety & Cross-Tab Sync**: All local storage reads/writes are protected against corrupted JSON and synchronize in real-time across multiple browser tabs via `window` storage events.
+
+---
+
 ## 📄 Documentation Links
 
 - 📖 **[RUN_GUIDE.md](file:///c:/Users/paran/Downloads/Krina/dental-receptionist/dental-receptionist/RUN_GUIDE.md)** — Complete step-by-step developer guide.

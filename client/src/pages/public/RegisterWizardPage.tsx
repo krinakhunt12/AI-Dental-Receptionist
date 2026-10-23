@@ -60,17 +60,17 @@ export const RegisterWizardPage: React.FC = () => {
     return saved
       ? JSON.parse(saved)
       : {
-          clinicName: 'SmileCare Dental',
-          city: 'San Francisco',
-          phone: '+1 (555) 987-6543',
-          doctorsCount: '3-5 Doctors',
-          website: 'https://smilecaredental.com',
-          fullName: 'Dr. Krina Mehta',
-          email: 'krina@smilecare.ai',
-          password: 'password123',
-          selectedPlanId: 'GROWTH' as 'STARTER' | 'GROWTH' | 'ENTERPRISE',
-          paymentOption: 'TRIAL' as 'TRIAL' | 'CARD' | 'UPI',
-        };
+        clinicName: 'SmileCare Dental',
+        city: 'San Francisco',
+        phone: '+1 (555) 987-6543',
+        doctorsCount: '3-5 Doctors',
+        website: 'https://smilecaredental.com',
+        fullName: 'Dr. Krina Mehta',
+        email: 'krina@smilecare.ai',
+        password: 'password123',
+        selectedPlanId: 'GROWTH' as 'STARTER' | 'GROWTH' | 'ENTERPRISE',
+        paymentOption: 'TRIAL' as 'TRIAL' | 'CARD' | 'UPI',
+      };
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -101,7 +101,8 @@ export const RegisterWizardPage: React.FC = () => {
       const res = step1Schema.safeParse(formData);
       if (!res.success) {
         const fieldErrors: Record<string, string> = {};
-        res.error.errors.forEach((err) => {
+        const issues = res.error.issues ?? (res.error as any).errors ?? [];
+        issues.forEach((err: any) => {
           if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
         });
         setErrors(fieldErrors);
@@ -111,7 +112,8 @@ export const RegisterWizardPage: React.FC = () => {
       const res = step2Schema.safeParse(formData);
       if (!res.success) {
         const fieldErrors: Record<string, string> = {};
-        res.error.errors.forEach((err) => {
+        const issues = res.error.issues ?? (res.error as any).errors ?? [];
+        issues.forEach((err: any) => {
           if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
         });
         setErrors(fieldErrors);
@@ -256,37 +258,32 @@ export const RegisterWizardPage: React.FC = () => {
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="text-slate-400 font-medium">Password Strength:</span>
                     <span
-                      className={`font-bold ${
-                        passwordScore <= 1
+                      className={`font-bold ${passwordScore <= 1
                           ? 'text-rose-400'
                           : passwordScore === 2
-                          ? 'text-amber-400'
-                          : 'text-emerald-400'
-                      }`}
+                            ? 'text-amber-400'
+                            : 'text-emerald-400'
+                        }`}
                     >
                       {passwordScore <= 1 ? 'Weak' : passwordScore === 2 ? 'Medium' : 'Strong'}
                     </span>
                   </div>
                   <div className="flex gap-1 h-1.5 w-full">
                     <div
-                      className={`flex-1 rounded-full ${
-                        passwordScore >= 1 ? 'bg-emerald-500' : 'bg-slate-800'
-                      }`}
+                      className={`flex-1 rounded-full ${passwordScore >= 1 ? 'bg-emerald-500' : 'bg-slate-800'
+                        }`}
                     />
                     <div
-                      className={`flex-1 rounded-full ${
-                        passwordScore >= 2 ? 'bg-emerald-500' : 'bg-slate-800'
-                      }`}
+                      className={`flex-1 rounded-full ${passwordScore >= 2 ? 'bg-emerald-500' : 'bg-slate-800'
+                        }`}
                     />
                     <div
-                      className={`flex-1 rounded-full ${
-                        passwordScore >= 3 ? 'bg-emerald-500' : 'bg-slate-800'
-                      }`}
+                      className={`flex-1 rounded-full ${passwordScore >= 3 ? 'bg-emerald-500' : 'bg-slate-800'
+                        }`}
                     />
                     <div
-                      className={`flex-1 rounded-full ${
-                        passwordScore >= 4 ? 'bg-emerald-500' : 'bg-slate-800'
-                      }`}
+                      className={`flex-1 rounded-full ${passwordScore >= 4 ? 'bg-emerald-500' : 'bg-slate-800'
+                        }`}
                     />
                   </div>
                 </div>
@@ -314,18 +311,16 @@ export const RegisterWizardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setBillingCycle('monthly')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                    billingCycle === 'monthly' ? 'bg-teal-500 text-slate-950 font-bold' : 'text-slate-400'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${billingCycle === 'monthly' ? 'bg-teal-500 text-slate-950 font-bold' : 'text-slate-400'
+                    }`}
                 >
                   Monthly
                 </button>
                 <button
                   type="button"
                   onClick={() => setBillingCycle('yearly')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 ${
-                    billingCycle === 'yearly' ? 'bg-teal-500 text-slate-950 font-bold' : 'text-slate-400'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 ${billingCycle === 'yearly' ? 'bg-teal-500 text-slate-950 font-bold' : 'text-slate-400'
+                    }`}
                 >
                   <span>Yearly</span>
                   <span className="px-1.5 py-0.2 bg-emerald-400 text-slate-950 text-[10px] font-extrabold rounded-full">
@@ -346,11 +341,10 @@ export const RegisterWizardPage: React.FC = () => {
                   <div
                     key={planKey}
                     onClick={() => handleChange('selectedPlanId', planKey)}
-                    className={`p-6 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between ${
-                      isSelected
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between ${isSelected
                         ? 'bg-teal-950/30 border-teal-400 ring-2 ring-teal-500/40 shadow-xl scale-[1.02]'
                         : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     {plan.badge && (
                       <span className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-teal-400 to-emerald-400 text-slate-950">
@@ -402,7 +396,7 @@ export const RegisterWizardPage: React.FC = () => {
                 Step 4: Activate Trial or Checkout
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Selected Plan: <strong>{PLANS[formData.selectedPlanId].name}</strong> (${PLANS[formData.selectedPlanId].priceMonthly}/mo)
+                Selected Plan: <strong>{PLANS[formData.selectedPlanId as keyof typeof PLANS]?.name}</strong> (${PLANS[formData.selectedPlanId as keyof typeof PLANS]?.priceMonthly}/mo)
               </p>
             </div>
 
@@ -410,11 +404,10 @@ export const RegisterWizardPage: React.FC = () => {
               {/* Option 1: 14-Day Free Trial */}
               <div
                 onClick={() => handleChange('paymentOption', 'TRIAL')}
-                className={`p-6 rounded-2xl border cursor-pointer transition-all ${
-                  formData.paymentOption === 'TRIAL'
+                className={`p-6 rounded-2xl border cursor-pointer transition-all ${formData.paymentOption === 'TRIAL'
                     ? 'bg-teal-950/40 border-teal-400 ring-2 ring-teal-500/30'
                     : 'bg-slate-950/50 border-slate-800'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <Badge variant="teal" icon={<Zap className="w-3.5 h-3.5" />}>
@@ -431,11 +424,10 @@ export const RegisterWizardPage: React.FC = () => {
               {/* Option 2: Mock Instant Payment */}
               <div
                 onClick={() => handleChange('paymentOption', 'CARD')}
-                className={`p-6 rounded-2xl border cursor-pointer transition-all ${
-                  formData.paymentOption === 'CARD'
+                className={`p-6 rounded-2xl border cursor-pointer transition-all ${formData.paymentOption === 'CARD'
                     ? 'bg-teal-950/40 border-teal-400 ring-2 ring-teal-500/30'
                     : 'bg-slate-950/50 border-slate-800'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <Badge variant="purple" icon={<ShieldCheck className="w-3.5 h-3.5" />}>

@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
-import { usePatientsQuery } from '../../api/mockClient';
+import { usePatients } from '../../features/patients/api';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Drawer } from '../../components/ui/Drawer';
+import { Skeleton } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 import { useUIStore } from '../../store/useUIStore';
 import { Search, Download, Plus, User, Phone, Mail, Calendar, FileText } from 'lucide-react';
 
 export const PatientsPage: React.FC = () => {
-  const { data: patients = [] } = usePatientsQuery();
-  const { addToast } = useUIStore();
   const [query, setQuery] = useState('');
+  const { data: patients = [], isLoading, isError, refetch } = usePatients({ search: query });
+  const { addToast } = useUIStore();
   const [selectedPatId, setSelectedPatId] = useState<string | null>(null);
-
-  const filtered = patients.filter(
-    (p) =>
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.phone.includes(query) ||
-      p.email.toLowerCase().includes(query.toLowerCase())
-  );
 
   const selectedPatient = patients.find((p) => p.id === selectedPatId);
 
@@ -42,7 +38,7 @@ export const PatientsPage: React.FC = () => {
           <Button variant="outline" size="sm" icon={Download} onClick={handleExportCSV}>
             Export CSV
           </Button>
-          <Button size="sm" icon={Plus}>
+          <Button size="sm" icon={Plus} onClick={() => addToast({ type: 'info', title: 'Add Patient Modal' })}>
             Add Patient
           </Button>
         </div>
@@ -57,57 +53,99 @@ export const PatientsPage: React.FC = () => {
         />
       </div>
 
-      {/* Patient Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
-            <tr>
-              <th className="p-4">Patient Name</th>
-              <th className="p-4">Contact Info</th>
-              <th className="p-4">Source</th>
-              <th className="p-4">Tags</th>
-              <th className="p-4">Total Visits</th>
-              <th className="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map((pat) => (
-              <tr
-                key={pat.id}
-                onClick={() => setSelectedPatId(pat.id)}
-                className="hover:bg-teal-50/50 cursor-pointer"
-              >
-                <td className="p-4">
-                  <div className="font-bold text-slate-900">{pat.name}</div>
-                  <div className="text-[11px] text-slate-400">{pat.age} yrs • {pat.gender}</div>
-                </td>
-                <td className="p-4">
-                  <div className="text-slate-800 font-medium">{pat.phone}</div>
-                  <div className="text-[11px] text-slate-400">{pat.email}</div>
-                </td>
-                <td className="p-4">
-                  <Badge variant="teal">{pat.source}</Badge>
-                </td>
-                <td className="p-4">
-                  <div className="flex flex-wrap gap-1">
-                    {pat.tags.map((t, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-semibold">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="p-4 font-bold text-slate-900">{pat.totalVisits} visits</td>
-                <td className="p-4 text-right">
-                  <Button size="sm" variant="ghost">
-                    View Profile
-                  </Button>
-                </td>
-              </tr>
+      {/* Loading Skeleton */}
+      {isLoading && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden p-6 space-y-4">
+          <Skeleton className="h-6 w-48" />
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-xl" />
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {!isLoading && isError && (
+        <ErrorState
+          title="Failed to load patient records"
+          message="Could not load the patient directory. Please try again."
+          onRetry={() => refetch()}
+        />
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !isError && patients.length === 0 && (
+        <EmptyState
+          icon={User}
+          title="No Patients Found"
+          description={
+            query
+              ? `No patient records match the search "${query}". Try another query.`
+              : 'No patient profiles exist in the system yet. Register your first patient to begin.'
+          }
+          actionLabel={query ? 'Clear Search' : 'Add New Patient'}
+          onAction={query ? () => setQuery('') : () => addToast({ type: 'info', title: 'Add Patient Modal' })}
+          actionIcon={query ? undefined : Plus}
+        />
+      )}
+
+      {/* Patient Table */}
+      {!isLoading && !isError && patients.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
+              <tr>
+                <th className="p-4">Patient Name</th>
+                <th className="p-4">Contact Info</th>
+                <th className="p-4">Source</th>
+                <th className="p-4">Tags</th>
+                <th className="p-4">Total Visits</th>
+                <th className="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {patients.map((pat) => (
+                <tr
+                  key={pat.id}
+                  onClick={() => setSelectedPatId(pat.id)}
+                  className="hover:bg-teal-50/50 cursor-pointer transition-colors"
+                >
+                  <td className="p-4">
+                    <div className="font-bold text-slate-900">{pat.name}</div>
+                    <div className="text-[11px] text-slate-400">
+                      {pat.age ? `${pat.age} yrs • ` : ''}
+                      {pat.gender || 'Patient'}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="text-slate-800 font-medium">{pat.phone}</div>
+                    <div className="text-[11px] text-slate-400">{pat.email}</div>
+                  </td>
+                  <td className="p-4">
+                    <Badge variant="teal">{pat.source || 'Website'}</Badge>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-wrap gap-1">
+                      {(pat.tags || []).map((t, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-semibold">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="p-4 font-bold text-slate-900">{pat.totalVisits ?? 1} visits</td>
+                  <td className="p-4 text-right">
+                    <Button size="sm" variant="ghost">
+                      View Profile
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Patient Profile Drawer */}
       <Drawer
@@ -120,15 +158,15 @@ export const PatientsPage: React.FC = () => {
           <div className="space-y-6 text-xs">
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
               <p><strong>Email:</strong> {selectedPatient.email}</p>
-              <p><strong>Medical History:</strong> {selectedPatient.medicalHistory.join(', ')}</p>
-              <p><strong>Last Visit:</strong> {selectedPatient.lastVisit}</p>
-              <p><strong>Total Appointments:</strong> {selectedPatient.totalVisits}</p>
+              <p><strong>Medical History:</strong> {(selectedPatient.medicalHistory || ['No Known Allergies']).join(', ')}</p>
+              <p><strong>Last Visit:</strong> {selectedPatient.lastVisit || 'N/A'}</p>
+              <p><strong>Total Appointments:</strong> {selectedPatient.totalVisits ?? 1}</p>
             </div>
 
             <div className="space-y-2">
               <h4 className="font-bold text-slate-900">Patient Notes</h4>
               <textarea
-                className="w-full text-xs p-3 rounded-xl border border-slate-200"
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-500"
                 rows={3}
                 placeholder="Add medical notes for receptionist or dentist..."
               />
