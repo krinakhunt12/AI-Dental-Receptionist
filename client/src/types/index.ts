@@ -182,3 +182,61 @@ export interface CareProtocolFilters {
   treatmentId?: string;
   status?: CareProtocolStatus;
 }
+
+export type NotificationChannel = 'WHATSAPP' | 'SMS';
+export type ConsentStatus = 'OPTED_IN' | 'OPTED_OUT';
+export type ReminderJobStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SENT'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'SKIPPED';
+
+export interface NotificationConsent {
+  id: string;
+  clinicId: string;
+  patientId: string;
+  channel: NotificationChannel;
+  status: ConsentStatus;
+  source?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ReminderJob {
+  id: string;
+  clinicId: string;
+  appointmentId: string;
+  instructionId: string;
+  patientId: string;
+  channel: NotificationChannel;
+  sendAt: string;
+  status: ReminderJobStatus;
+  attempts: number;
+  lastError?: string | null;
+  skipReason?: string | null;
+  providerMessageId?: string | null;
+  sentAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  instruction?: {
+    id: string;
+    title: string;
+    body?: string;
+    category: CareCategory;
+    phase: CarePhase;
+    isCritical: boolean;
+    offsetMinutes?: number;
+  };
+}
+
+export interface TriageMessageResponse {
+  reply: string;
+  urgency: 'NONE' | 'CONTACT_CLINIC' | 'EMERGENCY';
+  escalated: boolean;
+  symptomKeys: string[];
+  appointmentId: string | null;
+  patientId: string | null;
+}
+

@@ -1,6 +1,7 @@
 import { prisma } from '../prisma.js';
 import { ApiError } from '../utils/apiError.js';
 import { AppointmentSource, AppointmentStatus } from '@prisma/client';
+import { reminderPlanner } from './reminderPlanner.service.js';
 
 export interface CreateAppointmentInput {
   doctorId: string;
@@ -165,30 +166,68 @@ export class AppointmentService {
       },
     });
 
+    // Schedule pre-op and post-op care reminder jobs from approved protocol
+    try {
+      await reminderPlanner.scheduleAppointmentReminders(clinicId, appointment.id);
+    } catch (err) {
+      console.error('[AppointmentService] Failed to schedule reminders:', err);
+    }
+
     return appointment;
   }
 
   static async updateAppointmentStatus(clinicId: string, id: string, status: AppointmentStatus, notes?: string) {
     await this.getAppointmentById(clinicId, id);
 
-    return prisma.appointment.update({
+    const updated = await prisma.appointment.update({
       where: { id },
       data: {
         status,
         ...(notes && { notes }),
       },
     });
+
+    if (status === AppointmentStatus.CANCELLED) {
+      await reminderPlanner.cancelAppointmentReminders(clinicId, id);
+    }
+
+    return updated;
+  }
+
+  static async rescheduleAppointment(clinicId: string, id: string, startTime: string, endTime: string) {
+    await this.getAppointmentById(clinicId, id);
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (start >= end) {
+      throw ApiError.badRequest('End time must be after start time');
+    }
+
+    const updated = await prisma.appointment.update({
+      where: { id },
+      data: {
+        startTime: start,
+        endTime: end,
+      },
+    });
+
+    await reminderPlanner.rescheduleAppointmentReminders(clinicId, id);
+    return updated;
   }
 
   static async cancelAppointment(clinicId: string, id: string, reason?: string) {
     await this.getAppointmentById(clinicId, id);
 
-    return prisma.appointment.update({
+    const cancelled = await prisma.appointment.update({
       where: { id },
       data: {
         status: AppointmentStatus.CANCELLED,
         notes: reason ? `Cancelled: ${reason}` : 'Cancelled',
       },
     });
+
+    await reminderPlanner.cancelAppointmentReminders(clinicId, id);
+    return cancelled;
   }
 }
+

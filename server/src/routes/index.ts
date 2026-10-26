@@ -8,6 +8,9 @@ import appointmentRoutes from './appointment.routes.js';
 import aiRoutes from './ai.routes.js';
 import subscriptionRoutes from './subscription.routes.js';
 import careProtocolRoutes from './careProtocol.routes.js';
+import reminderRoutes from './reminder.routes.js';
+import webhookRoutes from './webhook.routes.js';
+import triageRoutes from './triage.routes.js';
 
 const router = Router();
 
@@ -20,5 +23,8 @@ router.use('/appointments', appointmentRoutes);
 router.use('/ai', aiRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/care-protocols', careProtocolRoutes);
+router.use('/reminder-jobs', reminderRoutes);
+router.use('/webhooks', webhookRoutes);
+router.use('/triage', triageRoutes);
 
 export default router;

@@ -11,6 +11,10 @@ import {
   EscalationRule,
   CarePlan,
   CareProtocolFilters,
+  ReminderJob,
+  NotificationConsent,
+  NotificationChannel,
+  ConsentStatus,
 } from '../types';
 import { ApiError } from '../lib/apiClient';
 import {
@@ -679,4 +683,129 @@ export const mockDb = {
       escalationRules: allRules,
     };
   },
+
+  async getAppointmentReminders(clinicId: string, appointmentId: string): Promise<ReminderJob[]> {
+    let jobs = reminderJobsStore.filter(
+      (j) => j.appointmentId === appointmentId && (!j.clinicId || j.clinicId === clinicId)
+    );
+
+    // If none exist yet for this appointment, generate realistic mock reminders from care-plan
+    if (jobs.length === 0) {
+      try {
+        const carePlan = await this.getCarePlan(clinicId, appointmentId);
+        const apt = appointmentsStore.find((a) => a.id === appointmentId);
+        const patientId = apt?.patientId || 'pat_1';
+
+        const sampleStatuses: Array<{
+          status: 'PENDING' | 'SENT' | 'FAILED' | 'SKIPPED';
+          lastError?: string;
+          skipReason?: string;
+        }> = [
+          { status: 'SENT' },
+          { status: 'PENDING' },
+          { status: 'FAILED', lastError: 'Provider timeout: network failure after 3 attempts' },
+          { status: 'SKIPPED', skipReason: 'Patient has no OPTED_IN consent for SMS' },
+        ];
+
+        let statusIdx = 0;
+        for (const inst of carePlan.instructions) {
+          const cfg = sampleStatuses[statusIdx % sampleStatuses.length];
+          statusIdx++;
+
+          const job: ReminderJob = {
+            id: `job_${appointmentId}_${inst.id}_wa`,
+            clinicId,
+            appointmentId,
+            instructionId: inst.id,
+            patientId,
+            channel: 'WHATSAPP',
+            sendAt: inst.sendAt || new Date().toISOString(),
+            status: cfg.status,
+            attempts: cfg.status === 'FAILED' ? 3 : cfg.status === 'SENT' ? 1 : 0,
+            lastError: cfg.lastError || null,
+            skipReason: cfg.skipReason || null,
+            providerMessageId: cfg.status === 'SENT' ? `wa_msg_${Date.now()}` : null,
+            sentAt: cfg.status === 'SENT' ? new Date().toISOString() : null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            instruction: {
+              id: inst.id,
+              title: inst.title,
+              category: inst.category,
+              phase: inst.phase,
+              isCritical: inst.isCritical,
+              offsetMinutes: inst.offsetMinutes,
+            },
+          };
+          reminderJobsStore.push(job);
+        }
+        jobs = reminderJobsStore.filter((j) => j.appointmentId === appointmentId);
+      } catch {
+        // Return empty if care plan resolution fails
+      }
+    }
+
+    return jobs;
+  },
+
+  async retryReminderJob(clinicId: string, jobId: string): Promise<ReminderJob> {
+    const job = reminderJobsStore.find((j) => j.id === jobId && (!j.clinicId || j.clinicId === clinicId));
+    if (!job) {
+      throw new ApiError(404, `Reminder job ${jobId} not found`);
+    }
+
+    job.status = 'PENDING';
+    job.attempts = 0;
+    job.lastError = null;
+    job.sendAt = new Date().toISOString();
+    job.updatedAt = new Date().toISOString();
+
+    return job;
+  },
+
+  async updateNotificationConsent(
+    clinicId: string,
+    patientId: string,
+    channel: NotificationChannel,
+    status: ConsentStatus,
+    source = 'STAFF'
+  ): Promise<NotificationConsent> {
+    let consent = notificationConsentsStore.find(
+      (c) => c.patientId === patientId && c.channel === channel && (!c.clinicId || c.clinicId === clinicId)
+    );
+
+    if (consent) {
+      consent.status = status;
+      consent.source = source;
+      consent.updatedAt = new Date().toISOString();
+    } else {
+      consent = {
+        id: `consent_${Date.now()}`,
+        clinicId,
+        patientId,
+        channel,
+        status,
+        source,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      notificationConsentsStore.push(consent);
+    }
+
+    if (status === 'OPTED_OUT') {
+      for (const job of reminderJobsStore) {
+        if (job.patientId === patientId && job.channel === channel && job.status === 'PENDING') {
+          job.status = 'CANCELLED';
+          job.skipReason = `Patient opted out of ${channel}`;
+          job.updatedAt = new Date().toISOString();
+        }
+      }
+    }
+
+    return consent;
+  },
 };
+
+const reminderJobsStore: ReminderJob[] = [];
+const notificationConsentsStore: NotificationConsent[] = [];
+

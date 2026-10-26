@@ -20,4 +20,8 @@ export const queryKeys = {
     [clinicId, 'careProtocols', id] as const,
   carePlan: (clinicId: string, appointmentId: string) =>
     [clinicId, 'appointments', appointmentId, 'carePlan'] as const,
+  appointmentReminders: (clinicId: string, appointmentId: string) =>
+    [clinicId, 'appointments', appointmentId, 'reminders'] as const,
+  patientConsent: (clinicId: string, patientId: string) =>
+    [clinicId, 'patients', patientId, 'consent'] as const,
 };

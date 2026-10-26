@@ -10,6 +10,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { useUIStore } from '../../store/useUIStore';
 import { Calendar as CalendarIcon, Clock, User, Plus, Filter, CheckCircle2 } from 'lucide-react';
+import { AppointmentRemindersSection } from '../../features/appointments/components/AppointmentRemindersSection';
 
 export const AppointmentsPage: React.FC = () => {
   const {
@@ -334,6 +335,9 @@ export const AppointmentsPage: React.FC = () => {
                 </Button>
               )}
             </div>
+
+            {/* Reminders section for this appointment */}
+            <AppointmentRemindersSection appointmentId={selectedApt.id} />
           </div>
         )}
       </Drawer>

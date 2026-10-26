@@ -128,6 +128,12 @@ model Clinic {
   careProtocols    CareProtocol[]
   careInstructions CareInstruction[]
   escalationRules  EscalationRule[]
+  emergencyPhone           String?
+  storeRawTriageMessages   Boolean                 @default(false)
+  notificationConsents     NotificationConsent[]
+  reminderJobs             ReminderJob[]
+  triageLogs               TriageLog[]
+  staffNotifications       StaffNotification[]
 
   @@index([deletedAt])
 }
@@ -244,6 +250,10 @@ model Patient {
   appointments Appointment[]
   conversations Conversation[]
   callLogs     CallLog[]
+  notificationConsents NotificationConsent[]
+  reminderJobs         ReminderJob[]
+  triageLogs           TriageLog[]
+  staffNotifications   StaffNotification[]
 
   @@index([clinicId])
   @@index([phone])
@@ -287,6 +297,10 @@ model Appointment {
   deletedAt    DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
+
+  reminderJobs       ReminderJob[]
+  triageLogs         TriageLog[]
+  staffNotifications StaffNotification[]
 
   @@index([clinicId])
   @@index([doctorId])
@@ -465,6 +479,8 @@ model CareInstruction {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  reminderJobs  ReminderJob[]
+
   @@index([clinicId])
   @@index([clinicId, protocolId])
 }
@@ -485,4 +501,104 @@ model EscalationRule {
 
   @@index([clinicId])
   @@index([protocolId])
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  SMS
+}
+
+enum ConsentStatus {
+  OPTED_IN
+  OPTED_OUT
+}
+
+enum ReminderJobStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+  SKIPPED
+}
+
+model NotificationConsent {
+  id        String              @id @default(uuid())
+  clinicId  String
+  clinic    Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel
+  status    ConsentStatus       @default(OPTED_IN)
+  source    String?             @default("SYSTEM")
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([clinicId, patientId, channel])
+  @@index([clinicId])
+  @@index([patientId])
+}
+
+model ReminderJob {
+  id                String              @id @default(uuid())
+  clinicId          String
+  clinic            Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointmentId     String
+  appointment       Appointment         @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  instructionId     String
+  instruction       CareInstruction     @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  patientId         String
+  patient           Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  channel           NotificationChannel
+  sendAt            DateTime
+  status            ReminderJobStatus   @default(PENDING)
+  attempts          Int                 @default(0)
+  lastError         String?
+  skipReason        String?
+  providerMessageId String?
+  sentAt            DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([appointmentId, instructionId, channel])
+  @@index([status, sendAt])
+  @@index([clinicId])
+}
+
+model TriageLog {
+  id            String       @id @default(uuid())
+  clinicId      String
+  clinic        Clinic       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  patientId     String?
+  patient       Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  symptomKeys   Json
+  urgency       String       // "NONE" | "CONTACT_CLINIC" | "EMERGENCY"
+  escalated     Boolean      @default(false)
+  messageText   String?
+  responseText  String?
+  createdAt     DateTime     @default(now())
+
+  @@index([clinicId])
+  @@index([appointmentId])
+}
+
+model StaffNotification {
+  id            String       @id @default(uuid())
+  clinicId      String
+  clinic        Clinic       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patientId     String?
+  patient       Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  title         String
+  message       String
+  severity      String       @default("HIGH") // "EMERGENCY" | "HIGH" | "WARNING" | "INFO"
+  isRead        Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([clinicId])
+  @@index([clinicId, isRead])
 }
