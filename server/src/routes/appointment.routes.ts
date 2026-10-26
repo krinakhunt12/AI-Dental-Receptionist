@@ -4,6 +4,10 @@ import {
   createAppointmentSchema,
   updateStatusSchema,
 } from '../controllers/appointment.controller.js';
+import {
+  CareProtocolController,
+  getCarePlanSchema,
+} from '../controllers/careProtocol.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { validateRequest } from '../middlewares/validate.js';
 import { logAudit } from '../middlewares/audit.middleware.js';
@@ -11,6 +15,8 @@ import { logAudit } from '../middlewares/audit.middleware.js';
 const router = Router();
 
 router.use(authenticate);
+
+router.get('/:id/care-plan', validateRequest(getCarePlanSchema), CareProtocolController.getCarePlan);
 
 router.get('/slots', AppointmentController.getAvailableSlots);
 router.get('/', AppointmentController.list);

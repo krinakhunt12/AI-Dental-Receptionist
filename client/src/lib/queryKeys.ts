@@ -1,4 +1,4 @@
-import { AppointmentFilters, PatientFilters } from '../types';
+import { AppointmentFilters, PatientFilters, CareProtocolFilters } from '../types';
 
 export const queryKeys = {
   all: (clinicId: string) => [clinicId] as const,
@@ -14,4 +14,10 @@ export const queryKeys = {
     [clinicId, 'slots', dentistId, date] as const,
   patients: (clinicId: string, filters?: PatientFilters) =>
     [clinicId, 'patients', filters ?? {}] as const,
+  careProtocols: (clinicId: string, filters?: CareProtocolFilters) =>
+    [clinicId, 'careProtocols', filters ?? {}] as const,
+  careProtocol: (clinicId: string, id: string) =>
+    [clinicId, 'careProtocols', id] as const,
+  carePlan: (clinicId: string, appointmentId: string) =>
+    [clinicId, 'appointments', appointmentId, 'carePlan'] as const,
 };

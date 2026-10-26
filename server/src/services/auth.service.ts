@@ -9,6 +9,7 @@ import {
   verifyRefreshToken,
 } from '../utils/jwt.js';
 import { Role } from '@prisma/client';
+import { seedClinic } from './careProtocolSeed.service.js';
 
 export interface RegisterClinicInput {
   clinicName: string;
@@ -135,6 +136,13 @@ export class AuthService {
 
       return { clinic, user, subscription };
     });
+
+    // Auto-seed default treatments, protocols, and escalation rules for newly registered clinic
+    try {
+      await seedClinic(result.clinic.id);
+    } catch (seedErr) {
+      logger.error('Failed to auto-seed clinic care protocols on signup:', seedErr);
+    }
 
     const tokenPayload = {
       userId: result.user.id,

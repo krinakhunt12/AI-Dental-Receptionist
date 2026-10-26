@@ -1,5 +1,8 @@
 import { PrismaClient, Role, AppointmentSource, AppointmentStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { seedClinic } from '../src/services/careProtocolSeed.service.js';
+
+export { seedClinic };
 
 const prisma = new PrismaClient();
 
@@ -161,7 +164,8 @@ async function main() {
     });
   }
 
-  console.log('✅ Clinic 1 seeded:', clinic1.name, '(Admin, Doctor, Staff)');
+  await seedClinic(clinic1.id, prisma);
+  console.log('✅ Clinic 1 seeded:', clinic1.name, '(Admin, Doctor, Staff, Protocols)');
 
   // 3. Sample Clinic 2: Apex Dental Care
   const clinic2 = await prisma.clinic.upsert({
@@ -219,7 +223,8 @@ async function main() {
     });
   }
 
-  console.log('✅ Clinic 2 seeded:', clinic2.name, '(Admin, Doctor, Staff)');
+  await seedClinic(clinic2.id, prisma);
+  console.log('✅ Clinic 2 seeded:', clinic2.name, '(Admin, Doctor, Staff, Protocols)');
   console.log('🎉 Seeding completed successfully!');
 }
 

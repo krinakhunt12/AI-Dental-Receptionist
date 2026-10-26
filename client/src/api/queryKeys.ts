@@ -8,4 +8,6 @@ export const queryKeys = {
   dentists: ['dentists'] as const,
   docs: ['docs'] as const,
   search: (query: string) => ['docs', 'search', query] as const,
+  careProtocols: ['careProtocols'] as const,
+  carePlan: (appointmentId: string) => ['appointments', appointmentId, 'carePlan'] as const,
 };

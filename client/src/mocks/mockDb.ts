@@ -6,6 +6,11 @@ import {
   Treatment,
   AppointmentFilters,
   PatientFilters,
+  CareProtocol,
+  CareInstruction,
+  EscalationRule,
+  CarePlan,
+  CareProtocolFilters,
 } from '../types';
 import { ApiError } from '../lib/apiClient';
 import {
@@ -66,11 +71,152 @@ const initialAppointments: Appointment[] = SEED_APPOINTMENTS.map((a) => ({
   clinicId: DEFAULT_CLINIC_ID,
 }));
 
+// Seed care protocols with instructions
+const initialCareProtocols: CareProtocol[] = [
+  {
+    id: 'proto_1',
+    clinicId: DEFAULT_CLINIC_ID,
+    treatmentId: 'trt_9', // Tooth extraction
+    name: 'Tooth Extraction & Oral Surgery Care Protocol (Draft)',
+    status: 'DRAFT',
+    version: 1,
+    approvedByUserId: null,
+    approvedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    instructions: [
+      {
+        id: 'inst_1',
+        clinicId: DEFAULT_CLINIC_ID,
+        protocolId: 'proto_1',
+        phase: 'POST_OP',
+        title: 'Post-Extraction Hydration',
+        body: 'Drink plenty of fluids (water, electrolytes) after surgery. Avoid hot drinks while numb. (Draft instruction pending dentist approval.)',
+        offsetMinutes: 30,
+        category: 'HYDRATION',
+        isCritical: false,
+        sortOrder: 0,
+      },
+      {
+        id: 'inst_2',
+        clinicId: DEFAULT_CLINIC_ID,
+        protocolId: 'proto_1',
+        phase: 'POST_OP',
+        title: 'Do NOT Use a Straw for 48 Hours',
+        body: 'Do NOT use a straw for at least 48 hours following surgery. Suction can dislodge the blood clot and cause dry socket. (Draft instruction pending dentist approval.)',
+        offsetMinutes: 0,
+        category: 'ACTIVITY',
+        isCritical: true,
+        sortOrder: 1,
+      },
+    ],
+  },
+  {
+    id: 'proto_2',
+    clinicId: DEFAULT_CLINIC_ID,
+    treatmentId: 'trt_8', // Teeth whitening
+    name: 'Teeth Whitening Care Protocol (Draft)',
+    status: 'DRAFT',
+    version: 1,
+    approvedByUserId: null,
+    approvedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    instructions: [
+      {
+        id: 'inst_3',
+        clinicId: DEFAULT_CLINIC_ID,
+        protocolId: 'proto_2',
+        phase: 'POST_OP',
+        title: 'Water-Focused Fluid Intake',
+        body: 'Drink ample water to stay hydrated and protect enamel. (Draft instruction pending dentist approval.)',
+        offsetMinutes: 0,
+        category: 'HYDRATION',
+        isCritical: false,
+        sortOrder: 0,
+      },
+      {
+        id: 'inst_4',
+        clinicId: DEFAULT_CLINIC_ID,
+        protocolId: 'proto_2',
+        phase: 'POST_OP',
+        title: '48-Hour White Diet',
+        body: 'Avoid coffee, tea, red wine, and dark colas ("white diet") for 48 hours. (Draft instruction pending dentist approval.)',
+        offsetMinutes: 0,
+        category: 'DIET',
+        isCritical: false,
+        sortOrder: 1,
+      },
+    ],
+  },
+  {
+    id: 'proto_3',
+    clinicId: DEFAULT_CLINIC_ID,
+    treatmentId: 'trt_7', // Root canal
+    name: 'Root Canal Care Protocol (Approved)',
+    status: 'APPROVED',
+    version: 1,
+    approvedByUserId: 'usr_dentist_1',
+    approvedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    instructions: [
+      {
+        id: 'inst_5',
+        clinicId: DEFAULT_CLINIC_ID,
+        protocolId: 'proto_3',
+        phase: 'POST_OP',
+        title: 'Gentle Chewing & Hydration',
+        body: 'Chew on the opposite side of your mouth until your permanent crown is placed. Drink plenty of water.',
+        offsetMinutes: 60,
+        category: 'HYDRATION',
+        isCritical: false,
+        sortOrder: 0,
+      },
+    ],
+  },
+];
+
+const initialEscalationRules: EscalationRule[] = [
+  {
+    id: 'rule_1',
+    clinicId: DEFAULT_CLINIC_ID,
+    protocolId: null,
+    symptomKey: 'HEAVY_BLEEDING',
+    description: 'Heavy bleeding that continues after gentle pressure',
+    action: 'EMERGENCY',
+    message: 'Persistent bleeding requires urgent evaluation. Contact clinic emergency line or visit nearest ER.',
+    daysAfterMin: null,
+  },
+  {
+    id: 'rule_2',
+    clinicId: DEFAULT_CLINIC_ID,
+    protocolId: null,
+    symptomKey: 'SEVERE_PAIN_AFTER_DAY_3',
+    description: 'Severe throbbing pain worsening after day 3',
+    action: 'CALL_CLINIC',
+    message: 'Pain worsening after day 3 may indicate dry socket. Call the clinic immediately.',
+    daysAfterMin: 3,
+  },
+  {
+    id: 'rule_3',
+    clinicId: DEFAULT_CLINIC_ID,
+    protocolId: null,
+    symptomKey: 'SWELLING_WITH_FEVER',
+    description: 'Facial swelling accompanied by fever',
+    action: 'EMERGENCY',
+    message: 'Swelling with fever indicates spreading infection. Seek immediate medical attention.',
+    daysAfterMin: null,
+  },
+];
+
 // In-memory data stores
 let appointmentsStore: Appointment[] = [...initialAppointments];
 let dentistsStore: Dentist[] = [...initialDentists];
 let treatmentsStore: Treatment[] = [...initialTreatments];
 let patientsStore: Patient[] = [...initialPatients];
+let careProtocolsStore: CareProtocol[] = JSON.parse(JSON.stringify(initialCareProtocols));
+let escalationRulesStore: EscalationRule[] = JSON.parse(JSON.stringify(initialEscalationRules));
 
 const STANDARD_TIMES = [
   '09:00',
@@ -88,6 +234,8 @@ export const mockDb = {
     dentistsStore = [...initialDentists];
     treatmentsStore = [...initialTreatments];
     patientsStore = [...initialPatients];
+    careProtocolsStore = JSON.parse(JSON.stringify(initialCareProtocols));
+    escalationRulesStore = JSON.parse(JSON.stringify(initialEscalationRules));
   },
 
   async getDentists(clinicId: string): Promise<Dentist[]> {
@@ -274,5 +422,261 @@ export const mockDb = {
 
   async cancelAppointment(clinicId: string, id: string): Promise<Appointment> {
     return this.updateAppointment(clinicId, id, { status: 'Cancelled' });
+  },
+
+  // --- Care Protocol Mock Methods ---
+
+  async getCareProtocols(clinicId: string, filters?: CareProtocolFilters): Promise<CareProtocol[]> {
+    let list = careProtocolsStore.filter((p) => !p.clinicId || p.clinicId === clinicId);
+    if (filters?.treatmentId) {
+      list = list.filter((p) => p.treatmentId === filters.treatmentId);
+    }
+    if (filters?.status) {
+      list = list.filter((p) => p.status === filters.status);
+    }
+    return list;
+  },
+
+  async getCareProtocol(clinicId: string, id: string): Promise<CareProtocol> {
+    const proto = careProtocolsStore.find(
+      (p) => p.id === id && (!p.clinicId || p.clinicId === clinicId)
+    );
+    if (!proto) {
+      throw new ApiError(404, `Care protocol with id ${id} not found`);
+    }
+    return proto;
+  },
+
+  async createCareProtocol(
+    clinicId: string,
+    data: { treatmentId: string; name: string }
+  ): Promise<CareProtocol> {
+    const existingForTreatment = careProtocolsStore.filter(
+      (p) => p.clinicId === clinicId && p.treatmentId === data.treatmentId
+    );
+    const maxVer = existingForTreatment.reduce((m, p) => Math.max(m, p.version), 0);
+    const newProto: CareProtocol = {
+      id: `proto_${Date.now()}`,
+      clinicId,
+      treatmentId: data.treatmentId,
+      name: data.name,
+      status: 'DRAFT',
+      version: maxVer + 1,
+      approvedByUserId: null,
+      approvedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      instructions: [],
+      escalationRules: [],
+    };
+    careProtocolsStore.unshift(newProto);
+    return newProto;
+  },
+
+  async updateCareProtocol(
+    clinicId: string,
+    id: string,
+    data: { name?: string }
+  ): Promise<CareProtocol> {
+    const existing = careProtocolsStore.find(
+      (p) => p.id === id && (!p.clinicId || p.clinicId === clinicId)
+    );
+    if (!existing) {
+      throw new ApiError(404, `Care protocol with id ${id} not found`);
+    }
+
+    // If APPROVED, create new DRAFT version (version + 1)
+    if (existing.status === 'APPROVED') {
+      const existingDraft = careProtocolsStore.find(
+        (p) => p.clinicId === clinicId && p.treatmentId === existing.treatmentId && p.status === 'DRAFT'
+      );
+      if (existingDraft) {
+        if (data.name) existingDraft.name = data.name;
+        return existingDraft;
+      }
+      const existingForTreatment = careProtocolsStore.filter(
+        (p) => p.clinicId === clinicId && p.treatmentId === existing.treatmentId
+      );
+      const maxVer = existingForTreatment.reduce((m, p) => Math.max(m, p.version), 0);
+      const newDraft: CareProtocol = {
+        id: `proto_${Date.now()}`,
+        clinicId,
+        treatmentId: existing.treatmentId,
+        name: data.name || existing.name,
+        status: 'DRAFT',
+        version: maxVer + 1,
+        approvedByUserId: null,
+        approvedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        instructions: (existing.instructions || []).map((i) => ({
+          ...i,
+          id: `inst_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          protocolId: `proto_${Date.now()}`,
+        })),
+        escalationRules: (existing.escalationRules || []).map((r) => ({
+          ...r,
+          id: `rule_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          protocolId: `proto_${Date.now()}`,
+        })),
+      };
+      careProtocolsStore.unshift(newDraft);
+      return newDraft;
+    }
+
+    if (data.name) {
+      existing.name = data.name;
+    }
+    existing.updatedAt = new Date().toISOString();
+    return existing;
+  },
+
+  async approveCareProtocol(clinicId: string, id: string, userId = 'usr_doctor_1'): Promise<CareProtocol> {
+    const existing = careProtocolsStore.find(
+      (p) => p.id === id && (!p.clinicId || p.clinicId === clinicId)
+    );
+    if (!existing) {
+      throw new ApiError(404, `Care protocol with id ${id} not found`);
+    }
+
+    // Archive previous approved protocols for same treatment
+    careProtocolsStore.forEach((p) => {
+      if (p.clinicId === clinicId && p.treatmentId === existing.treatmentId && p.status === 'APPROVED') {
+        p.status = 'ARCHIVED';
+      }
+    });
+
+    existing.status = 'APPROVED';
+    existing.approvedByUserId = userId;
+    existing.approvedAt = new Date().toISOString();
+    existing.updatedAt = new Date().toISOString();
+    return existing;
+  },
+
+  async addCareInstruction(
+    clinicId: string,
+    protocolId: string,
+    data: Omit<CareInstruction, 'id' | 'clinicId' | 'protocolId'>
+  ): Promise<CareInstruction> {
+    const proto = careProtocolsStore.find(
+      (p) => p.id === protocolId && (!p.clinicId || p.clinicId === clinicId)
+    );
+    if (!proto) {
+      throw new ApiError(404, `Care protocol with id ${protocolId} not found`);
+    }
+
+    let targetProto = proto;
+    if (proto.status === 'APPROVED') {
+      targetProto = await this.updateCareProtocol(clinicId, protocolId, {});
+    }
+
+    const newInstruction: CareInstruction = {
+      id: `inst_${Date.now()}`,
+      clinicId,
+      protocolId: targetProto.id,
+      phase: data.phase,
+      title: data.title,
+      body: data.body,
+      offsetMinutes: data.offsetMinutes,
+      category: data.category,
+      isCritical: Boolean(data.isCritical),
+      sortOrder: data.sortOrder ?? 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (!targetProto.instructions) targetProto.instructions = [];
+    targetProto.instructions.push(newInstruction);
+    return newInstruction;
+  },
+
+  async getCarePlan(clinicId: string, appointmentId: string): Promise<CarePlan> {
+    const apt = appointmentsStore.find(
+      (a) => a.id === appointmentId && (!a.clinicId || a.clinicId === clinicId)
+    );
+    if (!apt) {
+      throw new ApiError(404, `Appointment with id ${appointmentId} not found`);
+    }
+
+    // Match treatment
+    const treatment = treatmentsStore.find(
+      (t) =>
+        t.id === apt.treatmentId ||
+        t.name.toLowerCase() === (apt.treatment || '').toLowerCase()
+    );
+
+    const clinicRules = escalationRulesStore.filter(
+      (r) => (!r.clinicId || r.clinicId === clinicId) && !r.protocolId
+    );
+
+    if (!treatment) {
+      return {
+        appointmentId,
+        treatmentId: null,
+        treatmentName: apt.treatment || 'Treatment',
+        protocolId: null,
+        protocolName: null,
+        version: null,
+        approvedAt: null,
+        instructions: [],
+        escalationRules: clinicRules,
+      };
+    }
+
+    // Find APPROVED protocol only
+    const approvedProtocol = careProtocolsStore
+      .filter(
+        (p) =>
+          (!p.clinicId || p.clinicId === clinicId) &&
+          p.treatmentId === treatment.id &&
+          p.status === 'APPROVED'
+      )
+      .sort((a, b) => b.version - a.version)[0];
+
+    if (!approvedProtocol) {
+      return {
+        appointmentId,
+        treatmentId: treatment.id,
+        treatmentName: treatment.name,
+        protocolId: null,
+        protocolName: null,
+        version: null,
+        approvedAt: null,
+        instructions: [],
+        escalationRules: clinicRules,
+      };
+    }
+
+    // Parse appointment start/end datetime
+    const [year, month, day] = apt.date.split('-').map(Number);
+    const [hours, mins] = apt.time.split(':').map(Number);
+    const startDate = new Date(Date.UTC(year, month - 1, day, hours, mins, 0));
+    const endDate = new Date(startDate.getTime() + (apt.durationMins || 45) * 60 * 1000);
+
+    const resolvedInstructions = (approvedProtocol.instructions || []).map((inst) => {
+      const targetTimeMs =
+        inst.offsetMinutes < 0
+          ? startDate.getTime() + inst.offsetMinutes * 60 * 1000
+          : endDate.getTime() + inst.offsetMinutes * 60 * 1000;
+      return {
+        ...inst,
+        sendAt: new Date(targetTimeMs).toISOString(),
+      };
+    });
+
+    const protocolRules = approvedProtocol.escalationRules || [];
+    const allRules = [...protocolRules, ...clinicRules];
+
+    return {
+      appointmentId,
+      treatmentId: treatment.id,
+      treatmentName: treatment.name,
+      protocolId: approvedProtocol.id,
+      protocolName: approvedProtocol.name,
+      version: approvedProtocol.version,
+      approvedAt: approvedProtocol.approvedAt || null,
+      instructions: resolvedInstructions,
+      escalationRules: allRules,
+    };
   },
 };

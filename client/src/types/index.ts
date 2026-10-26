@@ -104,3 +104,81 @@ export interface PatientFilters {
   page?: number;
   pageSize?: number;
 }
+
+export type CareProtocolStatus = 'DRAFT' | 'APPROVED' | 'ARCHIVED';
+export type CarePhase = 'PRE_OP' | 'POST_OP';
+export type CareCategory =
+  | 'HYDRATION'
+  | 'DIET'
+  | 'MEDICATION'
+  | 'ACTIVITY'
+  | 'HYGIENE'
+  | 'FASTING'
+  | 'OTHER';
+export type EscalationAction = 'CALL_CLINIC' | 'EMERGENCY' | 'NOTIFY_STAFF';
+
+export interface CareInstruction {
+  id: string;
+  clinicId: string;
+  protocolId: string;
+  phase: CarePhase;
+  title: string;
+  body: string;
+  offsetMinutes: number;
+  category: CareCategory;
+  isCritical: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface EscalationRule {
+  id: string;
+  clinicId: string;
+  protocolId?: string | null;
+  symptomKey: string;
+  description: string;
+  action: EscalationAction;
+  message: string;
+  daysAfterMin?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CareProtocol {
+  id: string;
+  clinicId: string;
+  treatmentId: string;
+  treatment?: Treatment;
+  name: string;
+  status: CareProtocolStatus;
+  approvedByUserId?: string | null;
+  approvedAt?: string | null;
+  version: number;
+  createdAt?: string;
+  updatedAt?: string;
+  instructions?: CareInstruction[];
+  escalationRules?: EscalationRule[];
+  rules?: EscalationRule[];
+}
+
+export interface ResolvedCareInstruction extends CareInstruction {
+  sendAt: string; // ISO string in UTC
+}
+
+export interface CarePlan {
+  appointmentId: string;
+  treatmentId: string | null;
+  treatmentName: string;
+  protocolId: string | null;
+  protocolName: string | null;
+  version: number | null;
+  approvedAt?: string | null;
+  instructions: ResolvedCareInstruction[];
+  escalationRules?: EscalationRule[];
+}
+
+export interface CareProtocolFilters {
+  treatmentId?: string;
+  status?: CareProtocolStatus;
+}

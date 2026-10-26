@@ -7,6 +7,7 @@ import doctorRoutes from './doctor.routes.js';
 import appointmentRoutes from './appointment.routes.js';
 import aiRoutes from './ai.routes.js';
 import subscriptionRoutes from './subscription.routes.js';
+import careProtocolRoutes from './careProtocol.routes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/doctors', doctorRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/ai', aiRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/care-protocols', careProtocolRoutes);
 
 export default router;

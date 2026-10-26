@@ -17,6 +17,14 @@ import { useTenant } from '../app/TenantProvider';
 import { useAppointments } from '../features/appointments/api';
 import { useDentists } from '../features/dentists/api';
 import { usePatients } from '../features/patients/api';
+import {
+  useCareProtocols,
+  useCareProtocol,
+  useCarePlan,
+  useApproveProtocol,
+} from '../features/careProtocols/api';
+
+export { useCareProtocols, useCareProtocol, useCarePlan, useApproveProtocol };
 
 // Local memory store for interactive changes during runtime
 let appointmentsStore = [...SEED_APPOINTMENTS];

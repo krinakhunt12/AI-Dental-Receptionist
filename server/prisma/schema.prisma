@@ -10,8 +10,36 @@ generator client {
 enum Role {
   SUPER_ADMIN
   CLINIC_ADMIN
+  CLINIC_OWNER
   DOCTOR
   STAFF
+}
+
+enum CareProtocolStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+enum CarePhase {
+  PRE_OP
+  POST_OP
+}
+
+enum CareCategory {
+  HYDRATION
+  DIET
+  MEDICATION
+  ACTIVITY
+  HYGIENE
+  FASTING
+  OTHER
+}
+
+enum EscalationAction {
+  CALL_CLINIC
+  EMERGENCY
+  NOTIFY_STAFF
 }
 
 enum AppointmentStatus {
@@ -96,6 +124,10 @@ model Clinic {
   subscriptions Subscription[]
   invoices      Invoice[]
   auditLogs     AuditLog[]
+  treatments       Treatment[]
+  careProtocols    CareProtocol[]
+  careInstructions CareInstruction[]
+  escalationRules  EscalationRule[]
 
   @@index([deletedAt])
 }
@@ -119,6 +151,7 @@ model User {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   auditLogs           AuditLog[]
+  approvedProtocols   CareProtocol[]
 
   @@unique([clinicId, email])
   @@index([clinicId])
@@ -244,6 +277,8 @@ model Appointment {
   patient      Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   serviceId    String?
   service      Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  treatmentId  String?
+  treatment    Treatment?        @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
   startTime    DateTime
   endTime      DateTime
   status       AppointmentStatus @default(SCHEDULED)
@@ -256,6 +291,7 @@ model Appointment {
   @@index([clinicId])
   @@index([doctorId])
   @@index([patientId])
+  @@index([treatmentId])
   @@index([startTime])
   @@index([clinicId, startTime])
   @@unique([doctorId, startTime, deletedAt])
@@ -369,4 +405,84 @@ model AuditLog {
   @@index([clinicId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model Treatment {
+  id           String         @id @default(uuid())
+  clinicId     String
+  clinic       Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  durationMins Int            @default(30)
+  price        Decimal        @db.Decimal(10, 2)
+  isActive     Boolean        @default(true)
+  deletedAt    DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  careProtocols CareProtocol[]
+  appointments  Appointment[]
+
+  @@index([clinicId])
+}
+
+model CareProtocol {
+  id               String             @id @default(uuid())
+  clinicId         String
+  clinic           Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  treatmentId      String
+  treatment        Treatment          @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  name             String
+  status           CareProtocolStatus @default(DRAFT)
+  approvedByUserId String?
+  approvedByUser   User?              @relation(fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  approvedAt       DateTime?
+  version          Int                @default(1)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  instructions     CareInstruction[]
+  escalationRules  EscalationRule[]
+
+  @@unique([clinicId, treatmentId, version])
+  @@index([clinicId])
+  @@index([treatmentId])
+}
+
+model CareInstruction {
+  id            String       @id @default(uuid())
+  clinicId      String
+  clinic        Clinic       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  protocolId    String
+  protocol      CareProtocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  phase         CarePhase
+  title         String
+  body          String
+  offsetMinutes Int
+  category      CareCategory
+  isCritical    Boolean      @default(false)
+  sortOrder     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([clinicId])
+  @@index([clinicId, protocolId])
+}
+
+model EscalationRule {
+  id           String           @id @default(uuid())
+  clinicId     String
+  clinic       Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  protocolId   String?
+  protocol     CareProtocol?    @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  symptomKey   String
+  description  String
+  action       EscalationAction
+  message      String
+  daysAfterMin Int?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([clinicId])
+  @@index([protocolId])
 }

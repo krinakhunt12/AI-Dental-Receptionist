@@ -53,8 +53,9 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// API v1 Routes
+// API Routes
 app.use('/api/v1', routes);
+app.use('/api', routes);
 
 // 404 Handler
 app.use((_req: Request, res: Response) => {
