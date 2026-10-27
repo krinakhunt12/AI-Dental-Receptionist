@@ -95,45 +95,47 @@ export const BillingPage: React.FC = () => {
       </div>
 
       {/* Invoice Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 font-bold text-sm text-slate-900">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden h-[380px] flex flex-col">
+        <div className="p-4 border-b border-slate-100 font-bold text-sm text-slate-900 shrink-0">
           Payment History & Invoices
         </div>
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
-            <tr>
-              <th className="p-4">Invoice #</th>
-              <th className="p-4">Date</th>
-              <th className="p-4">Plan</th>
-              <th className="p-4">Amount</th>
-              <th className="p-4">Status</th>
-              <th className="p-4 text-right">PDF Download</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {invoices.map((inv) => (
-              <tr key={inv.id} className="hover:bg-slate-50">
-                <td className="p-4 font-bold text-slate-900">{inv.number}</td>
-                <td className="p-4 text-slate-600">{inv.date}</td>
-                <td className="p-4 text-slate-600">{inv.planName}</td>
-                <td className="p-4 font-bold text-slate-900">${inv.amount}</td>
-                <td className="p-4">
-                  <Badge variant={inv.status === 'Paid' ? 'success' : 'warning'}>{inv.status}</Badge>
-                </td>
-                <td className="p-4 text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    icon={Download}
-                    onClick={() => addToast({ type: 'success', title: 'Downloading PDF Invoice...' })}
-                  >
-                    Download
-                  </Button>
-                </td>
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase sticky top-0 z-10 shadow-2xs">
+              <tr>
+                <th className="p-4">Invoice #</th>
+                <th className="p-4">Date</th>
+                <th className="p-4">Plan</th>
+                <th className="p-4">Amount</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">PDF Download</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {invoices.map((inv) => (
+                <tr key={inv.id} className="hover:bg-slate-50">
+                  <td className="p-4 font-bold text-slate-900">{inv.number}</td>
+                  <td className="p-4 text-slate-600">{inv.date}</td>
+                  <td className="p-4 text-slate-600">{inv.planName}</td>
+                  <td className="p-4 font-bold text-slate-900">${inv.amount}</td>
+                  <td className="p-4">
+                    <Badge variant={inv.status === 'Paid' ? 'success' : 'warning'}>{inv.status}</Badge>
+                  </td>
+                  <td className="p-4 text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={Download}
+                      onClick={() => addToast({ type: 'success', title: 'Downloading PDF Invoice...' })}
+                    >
+                      Download
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Upgrade Plan Modal */}

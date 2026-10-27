@@ -13,6 +13,7 @@ export interface StatCardProps {
   icon?: LucideIcon;
   sparklineData?: number[];
   iconColor?: string;
+  className?: string;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -23,9 +24,10 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   sparklineData = [12, 18, 15, 25, 22, 35, 42],
   iconColor = 'text-teal-600 bg-teal-50 dark:bg-teal-950/50',
+  className = '',
 }) => {
   return (
-    <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-shadow">
+    <div className={`h-full min-h-[155px] p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between ${className}`}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           {title}

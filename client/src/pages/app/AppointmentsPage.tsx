@@ -215,9 +215,10 @@ export const AppointmentsPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden h-[540px] flex flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase sticky top-0 z-10 shadow-2xs">
                 <tr>
                   <th className="p-4">Patient</th>
                   <th className="p-4">Doctor</th>
@@ -276,6 +277,7 @@ export const AppointmentsPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )
       )}

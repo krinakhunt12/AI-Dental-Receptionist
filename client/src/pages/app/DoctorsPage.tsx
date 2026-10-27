@@ -65,42 +65,44 @@ export const DoctorsPage: React.FC = () => {
           {doctors.map((doc) => (
             <div
               key={doc.id}
-              className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-4 hover:shadow-md transition-shadow"
+              className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs h-[420px] flex flex-col justify-between hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-3">
-                <img
-                  src={doc.avatarUrl}
-                  alt={doc.name}
-                  className="w-12 h-12 rounded-xl object-cover ring-2 ring-teal-500/20"
-                />
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={doc.avatarUrl}
+                    alt={doc.name}
+                    className="w-12 h-12 rounded-xl object-cover ring-2 ring-teal-500/20"
+                  />
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">{doc.name}</h3>
+                    <p className="text-xs text-teal-600 font-semibold">{doc.specialty}</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-slate-700">
+                    <span className="font-semibold">Working Days:</span>
+                    <span className="font-bold text-slate-900">{doc.workingDays.join(', ')}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-700">
+                    <span className="font-semibold">Hours:</span>
+                    <span className="font-bold text-slate-900">{doc.workingHours}</span>
+                  </div>
+                </div>
+
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">{doc.name}</h3>
-                  <p className="text-xs text-teal-600 font-semibold">{doc.specialty}</p>
-                </div>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl space-y-2 text-xs">
-                <div className="flex items-center justify-between text-slate-700">
-                  <span className="font-semibold">Working Days:</span>
-                  <span className="font-bold text-slate-900">{doc.workingDays.join(', ')}</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-700">
-                  <span className="font-semibold">Hours:</span>
-                  <span className="font-bold text-slate-900">{doc.workingHours}</span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  Offered Treatments ({doc.treatments.length}):
-                </span>
-                <div className="space-y-1 text-xs">
-                  {doc.treatments.map((t, i) => (
-                    <div key={i} className="flex items-center justify-between text-slate-700">
-                      <span>{t.name}</span>
-                      <span className="font-bold text-slate-900">${t.price} ({t.duration}m)</span>
-                    </div>
-                  ))}
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Offered Treatments ({doc.treatments.length}):
+                  </span>
+                  <div className="max-h-24 overflow-y-auto pr-1 space-y-1 text-xs">
+                    {doc.treatments.map((t, i) => (
+                      <div key={i} className="flex items-center justify-between text-slate-700">
+                        <span>{t.name}</span>
+                        <span className="font-bold text-slate-900">${t.price} ({t.duration}m)</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -108,7 +110,7 @@ export const DoctorsPage: React.FC = () => {
                 size="sm"
                 variant="outline"
                 onClick={() => setSelectedDocId(doc.id)}
-                className="w-full justify-center"
+                className="w-full justify-center shrink-0 mt-4"
               >
                 Edit Weekly Schedule Grid
               </Button>

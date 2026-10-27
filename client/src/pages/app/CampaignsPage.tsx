@@ -52,14 +52,16 @@ export const CampaignsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {campaigns.map((c, idx) => (
-          <div key={idx} className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <Badge variant="teal">{c.channel}</Badge>
-              <Badge variant="success">{c.status}</Badge>
-            </div>
+          <div key={idx} className="p-6 bg-white rounded-2xl border border-slate-200 shadow-xs h-[280px] flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge variant="teal">{c.channel}</Badge>
+                <Badge variant="success">{c.status}</Badge>
+              </div>
 
-            <h3 className="text-base font-bold text-slate-900">{c.name}</h3>
-            <p className="text-xs text-slate-500">Trigger: {c.trigger}</p>
+              <h3 className="text-base font-bold text-slate-900 line-clamp-1">{c.name}</h3>
+              <p className="text-xs text-slate-500">Trigger: {c.trigger}</p>
+            </div>
 
             <div className="p-3 bg-slate-50 rounded-xl flex justify-between text-xs font-bold">
               <div>

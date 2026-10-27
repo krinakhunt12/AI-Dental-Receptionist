@@ -131,13 +131,13 @@ export const AppLayout: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen theme-light bg-slate-50 text-slate-900 flex flex-col font-sans">
+    <div className="h-screen w-screen overflow-hidden theme-light bg-slate-50 text-slate-900 flex flex-col font-sans">
       <CommandPalette />
       <ToastContainer />
 
       {/* STICKY TOP BANNERS (Trial, Usage Warning) */}
       {tenant.status === 'TRIAL' && tenant.trialDaysLeft !== undefined && (
-        <div className="bg-gradient-to-r from-teal-700 via-teal-800 to-indigo-900 text-white text-xs px-4 py-2 flex items-center justify-between shadow-xs border-b border-teal-600/30 z-30">
+        <div className="bg-gradient-to-r from-teal-700 via-teal-800 to-indigo-900 text-white text-xs px-4 py-2 flex items-center justify-between shadow-xs border-b border-teal-600/30 z-30 shrink-0">
           <div className="flex items-center gap-2 font-medium">
             <Sparkles className="w-4 h-4 text-teal-300 animate-pulse" />
             <span>
@@ -154,7 +154,7 @@ export const AppLayout: React.FC = () => {
       )}
 
       {usagePercentage >= 80 && (
-        <div className="bg-amber-500 text-slate-950 text-xs px-4 py-1.5 flex items-center justify-between font-semibold border-b border-amber-600 z-30">
+        <div className="bg-amber-500 text-slate-950 text-xs px-4 py-1.5 flex items-center justify-between font-semibold border-b border-amber-600 z-30 shrink-0">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-slate-950 shrink-0" />
             <span>
@@ -170,14 +170,14 @@ export const AppLayout: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* DESKTOP LEFT SIDEBAR */}
         <aside
-          className={`hidden md:flex flex-col bg-white border-r border-slate-200 transition-all duration-300 z-20 shrink-0 ${sidebarCollapsed ? 'w-[72px]' : 'w-[240px]'
+          className={`hidden md:flex flex-col h-full bg-white border-r border-slate-200 transition-all duration-300 z-20 shrink-0 ${sidebarCollapsed ? 'w-[72px]' : 'w-[240px]'
             }`}
         >
           {/* Clinic Brand Header */}
-          <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
+          <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 shrink-0">
             <div className="flex items-center gap-3 overflow-hidden">
               <div
                 className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-xs"
@@ -269,7 +269,7 @@ export const AppLayout: React.FC = () => {
 
           {/* Bottom Sidebar Usage / Plan Card */}
           {!sidebarCollapsed && (
-            <div className="p-3 border-t border-slate-100">
+            <div className="p-3 border-t border-slate-100 shrink-0">
               <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                   <span>{plan.name}</span>
@@ -348,9 +348,9 @@ export const AppLayout: React.FC = () => {
         )}
 
         {/* MAIN CONTENT AREA */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           {/* TOPBAR */}
-          <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-10">
+          <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 z-10">
             {/* Mobile hamburger button */}
             <div className="flex items-center gap-3 md:gap-4">
               <button
@@ -518,7 +518,7 @@ export const AppLayout: React.FC = () => {
           </header>
 
           {/* PAGE CONTENT CONTAINER */}
-          <main className="flex-1 p-4 md:p-8 max-w-[1440px] w-full mx-auto pb-24 md:pb-12">
+          <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-[1440px] w-full mx-auto pb-24 md:pb-12">
             <Outlet />
           </main>
         </div>

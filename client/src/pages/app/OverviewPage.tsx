@@ -157,8 +157,8 @@ export const OverviewPage: React.FC = () => {
                 key={r}
                 onClick={() => setDateRange(r)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${dateRange === r
-                    ? 'bg-white text-teal-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-teal-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
                   }`}
               >
                 {r === 'TODAY' ? 'Today' : r === '7D' ? 'Last 7 Days' : '30 Days'}
@@ -211,8 +211,8 @@ export const OverviewPage: React.FC = () => {
       {/* ROW 3: TODAY'S SCHEDULE (8) & NEEDS ATTENTION (4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Today's Schedule Timeline */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs h-[440px] flex flex-col">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
             <div>
               <h3 className="text-base font-bold text-slate-900">Today’s Appointment Schedule</h3>
               <p className="text-xs text-slate-500">Live roster by time slot and dentist</p>
@@ -222,7 +222,7 @@ export const OverviewPage: React.FC = () => {
             </Badge>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="flex-1 overflow-y-auto pr-1 divide-y divide-slate-100 mt-2">
             {todaySchedule.map((apt) => (
               <div key={apt.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 rounded-xl px-2 transition-colors">
                 <div className="flex items-center gap-3">
@@ -274,8 +274,8 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Right: Needs Attention Panel */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs h-[440px] flex flex-col">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-500" />
               Needs Attention
@@ -283,7 +283,7 @@ export const OverviewPage: React.FC = () => {
             <Badge variant="danger">{emergencies.length + needsHuman.length} Action Items</Badge>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex-1 overflow-y-auto pr-1 space-y-3 mt-2">
             {/* Emergencies Top */}
             {emergencies.map((conv) => (
               <div
@@ -341,7 +341,7 @@ export const OverviewPage: React.FC = () => {
         <ChartCard
           title="AI Resolution vs Escalation Trend"
           subtitle="Daily volume over the selected period"
-          className="lg:col-span-6"
+          className="lg:col-span-6 h-[380px]"
         >
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -359,7 +359,7 @@ export const OverviewPage: React.FC = () => {
         <ChartCard
           title="Bookings by Acquisition Source"
           subtitle="Channel breakdown"
-          className="lg:col-span-6"
+          className="lg:col-span-6 h-[380px]"
         >
           <div className="h-64 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -388,8 +388,8 @@ export const OverviewPage: React.FC = () => {
       {/* ROW 5: LIVE CONVERSATION FEED (8) & SETUP CHECKLIST (4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Live Conversation Feed */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs h-[390px] flex flex-col">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
             <div>
               <h3 className="text-base font-bold text-slate-900">Live Conversation Feed</h3>
               <p className="text-xs text-slate-500">Refreshes automatically every 15s</p>
@@ -399,7 +399,7 @@ export const OverviewPage: React.FC = () => {
             </Button>
           </div>
 
-          <div className="divide-y divide-slate-100">
+          <div className="flex-1 overflow-y-auto pr-1 divide-y divide-slate-100 mt-2">
             {conversations.slice(0, 5).map((conv) => (
               <div
                 key={conv.id}
@@ -436,8 +436,8 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         {/* Setup Checklist Progress Card */}
-        <div className="lg:col-span-4 bg-gradient-to-br from-slate-900 to-teal-950 text-white rounded-2xl p-6 shadow-xl space-y-4 border border-teal-500/20">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-4 bg-gradient-to-br from-slate-900 to-teal-950 text-white rounded-2xl p-6 shadow-xl border border-teal-500/20 h-[390px] flex flex-col justify-between">
+          <div className="flex items-center justify-between shrink-0">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-teal-400" />
               Setup Checklist
@@ -445,22 +445,22 @@ export const OverviewPage: React.FC = () => {
             <span className="text-xs font-extrabold text-teal-300">80% Done</span>
           </div>
 
-          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden shrink-0 my-2">
             <div className="bg-teal-400 h-full w-[80%]" />
           </div>
 
-          <div className="space-y-2 text-xs text-slate-300">
+          <div className="space-y-2 text-xs text-slate-300 flex-1 overflow-y-auto pr-1">
             <div className="flex items-center gap-2 text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" /> Add Doctor Rosters & Hours
+              <CheckCircle2 className="w-4 h-4 shrink-0" /> Add Doctor Rosters & Hours
             </div>
             <div className="flex items-center gap-2 text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" /> Upload Knowledge Base Fee Guide
+              <CheckCircle2 className="w-4 h-4 shrink-0" /> Upload Knowledge Base Fee Guide
             </div>
             <div className="flex items-center gap-2 text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" /> Connect Google Calendar Sync
+              <CheckCircle2 className="w-4 h-4 shrink-0" /> Connect Google Calendar Sync
             </div>
             <div className="flex items-center gap-2 text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" /> Customize Chat Widget Colors
+              <CheckCircle2 className="w-4 h-4 shrink-0" /> Customize Chat Widget Colors
             </div>
             <div className="flex items-center gap-2 text-slate-400">
               <div className="w-4 h-4 rounded-full border border-slate-600 shrink-0" />
@@ -475,7 +475,7 @@ export const OverviewPage: React.FC = () => {
         <ChartCard
           title="Top Patient Questions Asked to AI"
           subtitle="Frequency breakdown"
-          className="lg:col-span-6"
+          className="lg:col-span-6 h-[340px]"
         >
           <div className="space-y-3 pt-2">
             {topQuestions.map((q, i) => (
@@ -496,8 +496,8 @@ export const OverviewPage: React.FC = () => {
         </ChartCard>
 
         {/* Usage Meters Card */}
-        <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900">Current Subscription Usage Meters</h3>
+        <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs h-[340px] flex flex-col justify-between">
+          <h3 className="text-base font-bold text-slate-900 shrink-0">Current Subscription Usage Meters</h3>
 
           <div className="space-y-4 text-xs">
             <div>
@@ -576,10 +576,10 @@ export const OverviewPage: React.FC = () => {
                 >
                   <div
                     className={`max-w-[85%] p-3 rounded-2xl text-xs ${m.sender === 'patient'
-                        ? 'bg-slate-100 text-slate-800 rounded-bl-none'
-                        : m.sender === 'staff'
-                          ? 'bg-indigo-600 text-white rounded-br-none'
-                          : 'bg-teal-600 text-white rounded-br-none'
+                      ? 'bg-slate-100 text-slate-800 rounded-bl-none'
+                      : m.sender === 'staff'
+                        ? 'bg-indigo-600 text-white rounded-br-none'
+                        : 'bg-teal-600 text-white rounded-br-none'
                       }`}
                   >
                     <div className="font-bold text-[10px] opacity-80 mb-0.5">

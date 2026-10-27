@@ -44,40 +44,42 @@ export const TenantsPage: React.FC = () => {
         />
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950 border-b border-slate-800 font-bold text-white uppercase">
-            <tr>
-              <th className="p-4">Clinic Name</th>
-              <th className="p-4">Owner</th>
-              <th className="p-4">Plan</th>
-              <th className="p-4">MRR</th>
-              <th className="p-4">Status</th>
-              <th className="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800">
-            {tenants.map((t) => (
-              <tr key={t.id} className="hover:bg-slate-800/50">
-                <td className="p-4 font-bold text-white">{t.name}</td>
-                <td className="p-4">{t.owner}</td>
-                <td className="p-4"><Badge variant="teal">{t.plan}</Badge></td>
-                <td className="p-4 font-bold text-white">${t.mrr}/mo</td>
-                <td className="p-4"><Badge variant="success">{t.status}</Badge></td>
-                <td className="p-4 text-right flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    icon={ShieldAlert}
-                    onClick={() => handleImpersonate(t.name)}
-                  >
-                    Impersonate
-                  </Button>
-                </td>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden h-[540px] flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-950 border-b border-slate-800 font-bold text-white uppercase sticky top-0 z-10 shadow-2xs">
+              <tr>
+                <th className="p-4">Clinic Name</th>
+                <th className="p-4">Owner</th>
+                <th className="p-4">Plan</th>
+                <th className="p-4">MRR</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {tenants.map((t) => (
+                <tr key={t.id} className="hover:bg-slate-800/50">
+                  <td className="p-4 font-bold text-white">{t.name}</td>
+                  <td className="p-4">{t.owner}</td>
+                  <td className="p-4"><Badge variant="teal">{t.plan}</Badge></td>
+                  <td className="p-4 font-bold text-white">${t.mrr}/mo</td>
+                  <td className="p-4"><Badge variant="success">{t.status}</Badge></td>
+                  <td className="p-4 text-right flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      icon={ShieldAlert}
+                      onClick={() => handleImpersonate(t.name)}
+                    >
+                      Impersonate
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

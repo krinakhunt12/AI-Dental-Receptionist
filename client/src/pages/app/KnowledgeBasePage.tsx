@@ -94,9 +94,9 @@ export const KnowledgeBasePage: React.FC = () => {
           </div>
 
           {/* Existing Trained FAQs */}
-          <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-3">
-            <h3 className="text-sm font-bold text-slate-900">Trained FAQ Library</h3>
-            <div className="space-y-3">
+          <div className="p-6 bg-white rounded-2xl border border-slate-200 h-[380px] flex flex-col">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 shrink-0">Trained FAQ Library</h3>
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3 mt-3">
               {faqs.map((f, i) => (
                 <div key={i} className="p-3 bg-slate-50 rounded-xl space-y-1 text-xs">
                   <div className="font-bold text-slate-900">Q: {f.q}</div>

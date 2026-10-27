@@ -17,11 +17,11 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen theme-dark bg-slate-950 text-white font-sans flex flex-col">
+    <div className="h-screen w-screen overflow-hidden theme-dark bg-slate-950 text-white font-sans flex flex-col">
       <ToastContainer />
 
       {/* SUPER ADMIN PERSISTENT WARNING BAR */}
-      <div className="bg-rose-950 border-b border-rose-800 text-rose-200 text-xs px-4 py-2 flex items-center justify-between font-mono font-bold z-50">
+      <div className="bg-rose-950 border-b border-rose-800 text-rose-200 text-xs px-4 py-2 flex items-center justify-between font-mono font-bold shrink-0 z-50">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-rose-400 animate-pulse" />
           <span>SUPER ADMIN PLATFORM CONSOLE — Logged in as {user?.email}</span>
@@ -34,9 +34,9 @@ export const AdminLayout: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left Sidebar */}
-        <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 flex flex-col justify-between">
+        <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 flex flex-col justify-between shrink-0 h-full overflow-y-auto">
           <div className="space-y-6">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-rose-600 font-bold flex items-center justify-center">
@@ -76,7 +76,7 @@ export const AdminLayout: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8 max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-8 max-w-7xl mx-auto w-full pb-16">
           <Outlet />
         </main>
       </div>

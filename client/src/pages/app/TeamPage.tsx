@@ -34,31 +34,33 @@ export const TeamPage: React.FC = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
-            <tr>
-              <th className="p-4">User</th>
-              <th className="p-4">Email</th>
-              <th className="p-4">Role</th>
-              <th className="p-4">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {team.map((m, idx) => (
-              <tr key={idx} className="hover:bg-slate-50">
-                <td className="p-4 font-bold text-slate-900">{m.name}</td>
-                <td className="p-4 text-slate-600">{m.email}</td>
-                <td className="p-4">
-                  <Badge variant="teal">{m.role}</Badge>
-                </td>
-                <td className="p-4">
-                  <Badge variant="success">{m.status}</Badge>
-                </td>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden h-[420px] flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase sticky top-0 z-10 shadow-2xs">
+              <tr>
+                <th className="p-4">User</th>
+                <th className="p-4">Email</th>
+                <th className="p-4">Role</th>
+                <th className="p-4">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {team.map((m, idx) => (
+                <tr key={idx} className="hover:bg-slate-50">
+                  <td className="p-4 font-bold text-slate-900">{m.name}</td>
+                  <td className="p-4 text-slate-600">{m.email}</td>
+                  <td className="p-4">
+                    <Badge variant="teal">{m.role}</Badge>
+                  </td>
+                  <td className="p-4">
+                    <Badge variant="success">{m.status}</Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Modal

@@ -92,58 +92,60 @@ export const PatientsPage: React.FC = () => {
 
       {/* Patient Table */}
       {!isLoading && !isError && patients.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase">
-              <tr>
-                <th className="p-4">Patient Name</th>
-                <th className="p-4">Contact Info</th>
-                <th className="p-4">Source</th>
-                <th className="p-4">Tags</th>
-                <th className="p-4">Total Visits</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {patients.map((pat) => (
-                <tr
-                  key={pat.id}
-                  onClick={() => setSelectedPatId(pat.id)}
-                  className="hover:bg-teal-50/50 cursor-pointer transition-colors"
-                >
-                  <td className="p-4">
-                    <div className="font-bold text-slate-900">{pat.name}</div>
-                    <div className="text-[11px] text-slate-400">
-                      {pat.age ? `${pat.age} yrs • ` : ''}
-                      {pat.gender || 'Patient'}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="text-slate-800 font-medium">{pat.phone}</div>
-                    <div className="text-[11px] text-slate-400">{pat.email}</div>
-                  </td>
-                  <td className="p-4">
-                    <Badge variant="teal">{pat.source || 'Website'}</Badge>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-wrap gap-1">
-                      {(pat.tags || []).map((t, idx) => (
-                        <span key={idx} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-semibold">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4 font-bold text-slate-900">{pat.totalVisits ?? 1} visits</td>
-                  <td className="p-4 text-right">
-                    <Button size="sm" variant="ghost">
-                      View Profile
-                    </Button>
-                  </td>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden h-[540px] flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase sticky top-0 z-10 shadow-2xs">
+                <tr>
+                  <th className="p-4">Patient Name</th>
+                  <th className="p-4">Contact Info</th>
+                  <th className="p-4">Source</th>
+                  <th className="p-4">Tags</th>
+                  <th className="p-4">Total Visits</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {patients.map((pat) => (
+                  <tr
+                    key={pat.id}
+                    onClick={() => setSelectedPatId(pat.id)}
+                    className="hover:bg-teal-50/50 cursor-pointer transition-colors"
+                  >
+                    <td className="p-4">
+                      <div className="font-bold text-slate-900">{pat.name}</div>
+                      <div className="text-[11px] text-slate-400">
+                        {pat.age ? `${pat.age} yrs • ` : ''}
+                        {pat.gender || 'Patient'}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-slate-800 font-medium">{pat.phone}</div>
+                      <div className="text-[11px] text-slate-400">{pat.email}</div>
+                    </td>
+                    <td className="p-4">
+                      <Badge variant="teal">{pat.source || 'Website'}</Badge>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-wrap gap-1">
+                        {(pat.tags || []).map((t, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-semibold">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4 font-bold text-slate-900">{pat.totalVisits ?? 1} visits</td>
+                    <td className="p-4 text-right">
+                      <Button size="sm" variant="ghost">
+                        View Profile
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
