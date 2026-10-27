@@ -21,7 +21,11 @@ export class AppointmentService {
     doctorId?: string,
     patientId?: string,
     status?: AppointmentStatus,
-    date?: string
+    date?: string,
+    from?: string,
+    to?: string,
+    search?: string,
+    sort: 'asc' | 'desc' = 'asc'
   ) {
     const skip = (page - 1) * limit;
     const where: any = {
@@ -33,12 +37,26 @@ export class AppointmentService {
     if (patientId) where.patientId = patientId;
     if (status) where.status = status;
 
-    if (date) {
+    if (from || to) {
+      where.startTime = {};
+      if (from) where.startTime.gte = new Date(from);
+      if (to) where.startTime.lte = new Date(to);
+    } else if (date) {
       const dayStart = new Date(date);
       dayStart.setUTCHours(0, 0, 0, 0);
       const dayEnd = new Date(date);
       dayEnd.setUTCHours(23, 59, 59, 999);
       where.startTime = { gte: dayStart, lte: dayEnd };
+    }
+
+    if (search) {
+      where.patient = {
+        OR: [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search } },
+        ],
+      };
     }
 
     const [appointments, total] = await Promise.all([
@@ -50,8 +68,9 @@ export class AppointmentService {
           doctor: { select: { id: true, name: true, specialty: true } },
           patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
           service: { select: { id: true, name: true, durationMins: true, price: true } },
+          treatment: { select: { id: true, name: true, durationMins: true, price: true } },
         },
-        orderBy: { startTime: 'asc' },
+        orderBy: { startTime: sort },
       }),
       prisma.appointment.count({ where }),
     ]);

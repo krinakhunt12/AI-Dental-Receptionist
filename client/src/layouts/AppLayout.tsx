@@ -15,6 +15,10 @@ import { useCreateAppointment } from '../features/appointments/api';
 import { useDentists } from '../features/dentists/api';
 import { usePatients } from '../features/patients/api';
 import {
+  useStaffNotifications,
+  useAcknowledgeStaffNotification,
+} from '../features/notifications/hooks/useStaffNotifications';
+import {
   LayoutDashboard,
   MessageSquare,
   Calendar,
@@ -41,6 +45,9 @@ import {
   Menu,
   X,
   HelpCircle,
+  FileText,
+  Check,
+  ShieldAlert,
 } from 'lucide-react';
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -57,6 +64,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   CreditCard,
   ShieldCheck,
   Settings,
+  FileText,
+  Bell,
+  ShieldAlert,
 };
 
 export const AppLayout: React.FC = () => {
@@ -77,6 +87,12 @@ export const AppLayout: React.FC = () => {
   const [isQuickAptOpen, setIsQuickAptOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Staff notifications and escalation alerts
+  const { data: staffNotifs = [] } = useStaffNotifications();
+  const ackNotifMutation = useAcknowledgeStaffNotification();
+  const unreadNotifs = staffNotifs.filter((n) => !n.isRead && !n.acknowledgedAt);
+  const emergencyCount = unreadNotifs.filter((n) => n.severity === 'EMERGENCY').length;
 
   // Quick Appointment Modal Form state
   const { data: doctors = [] } = useDentists();
@@ -401,52 +417,93 @@ export const AppLayout: React.FC = () => {
                 <button
                   onClick={() => setIsNotifOpen(!isNotifOpen)}
                   className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 relative transition-colors cursor-pointer"
+                  title="Staff notifications & alerts"
                 >
                   <Bell className="w-5 h-5" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+                  {unreadNotifs.length > 0 && (
+                    <span
+                      className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
+                        emergencyCount > 0 ? 'bg-rose-500 animate-pulse' : 'bg-teal-500'
+                      }`}
+                    />
+                  )}
                 </button>
 
                 {isNotifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                      <span className="text-xs font-bold text-slate-900">Notifications & Alerts</span>
-                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
-                        2 Emergency
-                      </span>
+                  <div className="absolute right-0 mt-2 w-88 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in space-y-3 max-h-[460px] flex flex-col">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
+                      <span className="text-xs font-bold text-slate-900">Staff Notifications & Alerts</span>
+                      {emergencyCount > 0 ? (
+                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                          {emergencyCount} Emergency
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                          {unreadNotifs.length} New
+                        </span>
+                      )}
                     </div>
 
-                    <div className="space-y-2 text-xs">
-                      <div
-                        onClick={() => {
-                          setIsNotifOpen(false);
-                          navigate('/app/conversations');
-                        }}
-                        className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 hover:bg-rose-100/70 cursor-pointer space-y-1"
-                      >
-                        <div className="flex items-center justify-between font-bold text-rose-800">
-                          <span>Emergency Toothache Alert</span>
-                          <span className="text-[10px] text-rose-600">5m ago</span>
+                    <div className="flex-1 overflow-y-auto space-y-2 text-xs pr-1">
+                      {staffNotifs.length === 0 ? (
+                        <div className="py-6 text-center text-slate-400">
+                          <Check className="w-6 h-6 mx-auto mb-1 text-teal-500" />
+                          <p className="text-xs font-semibold">All clear!</p>
+                          <p className="text-[10px]">No pending staff alerts or escalations.</p>
                         </div>
-                        <p className="text-slate-600 text-[11px] line-clamp-2">
-                          Priya Sharma reported severe throbbing pain on right jaw!
-                        </p>
-                      </div>
+                      ) : (
+                        staffNotifs.map((n) => {
+                          const isEmergency = n.severity === 'EMERGENCY';
+                          const isAcked = !!n.acknowledgedAt || n.isRead;
 
-                      <div
-                        onClick={() => {
-                          setIsNotifOpen(false);
-                          navigate('/app/appointments');
-                        }}
-                        className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer space-y-1"
-                      >
-                        <div className="flex items-center justify-between font-bold text-slate-800">
-                          <span>Unconfirmed Appointment</span>
-                          <span className="text-[10px] text-slate-400">1h ago</span>
-                        </div>
-                        <p className="text-slate-500 text-[11px]">
-                          Rahul Verma slot tomorrow 11:00 AM needs staff confirmation.
-                        </p>
-                      </div>
+                          return (
+                            <div
+                              key={n.id}
+                              className={`p-2.5 rounded-xl border transition-colors space-y-1.5 ${
+                                isEmergency
+                                  ? 'bg-rose-50 border-rose-200 text-rose-900'
+                                  : isAcked
+                                  ? 'bg-slate-50/60 border-slate-100 opacity-60 text-slate-600'
+                                  : 'bg-white border-slate-200 text-slate-900'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between font-bold">
+                                <div className="flex items-center gap-1.5">
+                                  {isEmergency && <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />}
+                                  <span className="text-[11px] truncate max-w-[170px]">{n.title}</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-slate-600 text-[11px] line-clamp-2">{n.message}</p>
+                              <div className="flex items-center justify-between pt-1">
+                                <button
+                                  onClick={() => {
+                                    setIsNotifOpen(false);
+                                    if (n.type === 'ESCALATION') navigate('/app/triage-logs');
+                                    else navigate('/app/reminders');
+                                  }}
+                                  className="text-[10px] font-bold text-teal-600 hover:text-teal-700 underline cursor-pointer"
+                                >
+                                  View Details
+                                </button>
+                                {!isAcked && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      ackNotifMutation.mutate(n.id);
+                                    }}
+                                    className="px-2 py-0.5 rounded text-[10px] font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 shadow-2xs cursor-pointer"
+                                  >
+                                    Acknowledge
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 )}

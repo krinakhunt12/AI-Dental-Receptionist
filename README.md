@@ -1,8 +1,8 @@
-# 🦷 SmileCare AI Dental Receptionist
+# 🦷 SmileCare AI Dental Receptionist & Practice SaaS
 
-A full-stack, intelligent receptionist application for dental practices. Built with **React 19, Vite, Tailwind CSS v4** on the frontend and **Node.js, Fastify, TypeScript** on the backend.
+A production-grade, multi-tenant dental practice SaaS built with **React 19, TypeScript, and Tailwind CSS v4** on the frontend and **Node.js, Express, Prisma ORM, and PostgreSQL** on the backend.
 
-Includes **RAG (Retrieval-Augmented Generation)** over clinic documents, real-time appointment booking, emergency detection, dentist schedules, service price catalogs, and a zero-cost **Free AI Engine**!
+Includes **RAG (Retrieval-Augmented Generation)** over clinic documents, live appointment scheduling with slot-conflict constraints, clinical emergency triage, pre/post-operative care protocols, and automated WhatsApp/SMS dispatch.
 
 ---
 
@@ -18,49 +18,72 @@ npm run dev
 
 Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
-> 📄 **Complete Guide**: For detailed step-by-step instructions, API documentation, and feature list, see [RUN_GUIDE.md](file:///c:/Users/paran/Downloads/Krina/dental-receptionist/dental-receptionist/RUN_GUIDE.md).
+- **Client Port**: `http://localhost:5173`
+- **Server API**: `http://localhost:3001`
 
 ---
 
-## 🚀 Key Application Features
+## 🗂️ Flow-Wise Documentation Suite (`docs/`)
 
-- **📊 Dashboard**: KPI summary cards for Today's Appointments (18), New Patients (7), AI Conversations (42), and Human Transfers (4).
-- **💬 Patient AI Chat**: Interactive receptionist with tool execution tracking (`⚡ list_services`, `⚡ check_availability`), RAG knowledge context drawer, and emergency pre-check.
-- **📅 Appointments**: Schedule agenda with status filters (`Booked`, `Completed`, `Cancelled`, `No-show`) and dentist assignment.
-- **👨‍⚕️ Dentists**: Roster for Dr. Patel (General Dentistry) and Dr. Shah (Orthodontics) with operating hours.
-- **🦷 Services & Prices**: Standard treatment fee catalog in ₹ (INR) and duration times.
-- **📚 Knowledge Base**: Drag & drop PDF/MD/TXT document uploader with vector search test sandbox.
-- **📈 Analytics**: Topic request intent distribution chart (Appointments 48%, Pricing 19%, Services 14%, Hours 9%, Other 10%).
+All system flows and architectural manuals are organized in the [`docs/`](./docs) directory:
 
----
-
-## 🛠️ Tech Stack & Scripts
-
-- **Frontend**: React 19, Vite, Tailwind CSS v4, TypeScript
-- **Backend**: Fastify, Node.js, Transformers.js (On-device embeddings), unpdf
-- **AI Engine**: Built-in Free Local AI Agent, OpenRouter, Google Gemini, Anthropic Claude
-
-| Command | Description |
+| Document | Description |
 |---|---|
-| `npm run setup` | Installs dependencies across root, server, and client |
-| `npm run dev` | Starts server (`:3001`) and client (`:5173`) concurrently |
-| `npm run typecheck` | Runs TypeScript verification |
-| `npm run build` | Builds client for production |
+| 📖 [Documentation Index](./docs/README.md) | Central documentation map & sitemap |
+| 🏗️ [01. Architecture Overview](./docs/01_ARCHITECTURE_OVERVIEW.md) | Multi-tenant isolation model, database schema, tech stack |
+| 🔐 [02. Authentication & RBAC](./docs/02_AUTHENTICATION_AND_RBAC_FLOW.md) | JWT token lifecycle, server-enforced `clinicId`, role permissions |
+| 🤖 [03. AI Receptionist & RAG](./docs/03_AI_RECEPTIONIST_AND_RAG_FLOW.md) | Conversational triage intake, RAG vector retrieval, tool calls |
+| 🚨 [04. Emergency Triage & Escalations](./docs/04_EMERGENCY_TRIAGE_AND_ESCALATION_FLOW.md) | Symptom detection, HIPAA-redacted audit logs, staff alerts |
+| 📅 [05. Appointment Scheduling](./docs/05_APPOINTMENT_SCHEDULING_FLOW.md) | Dynamic slot generation, 409 conflict handling, optimistic cancel |
+| 📋 [06. Pre & Post-Op Care Protocols](./docs/06_PRE_POST_OP_CARE_PROTOCOLS_FLOW.md) | Protocol versioning (vN to vN+1), doctor approval, fasting rules |
+| 🔔 [07. Reminders & Dispatch Scheduler](./docs/07_REMINDERS_CAMPAIGNS_AND_QUIET_HOURS_FLOW.md) | WhatsApp/SMS queues, quiet-hours shifts, failed job retries |
+| 🏢 [08. Multi-Tenancy & Billing](./docs/08_MULTI_TENANCY_SUBSCRIPTION_AND_BILLING_FLOW.md) | Tenant scoping, plan limits, usage meters, feature flags |
+| 🎨 [09. Frontend UI & Component Guide](./docs/09_FRONTEND_UI_AND_COMPONENT_GUIDE.md) | Fixed layout frame, uniform card heights, TanStack Query caching |
+| 🔌 [10. API Specification & Endpoints](./docs/10_API_SPECIFICATION_AND_WEBSOCKET_FLOW.md) | Complete REST API endpoint reference and error formats |
+
+Additionally, see **[HYDRATION_SUMMARY.md](./HYDRATION_SUMMARY.md)** for a deep dive into React hydration, client storage resilience, and the real backend migration.
 
 ---
 
-## 🔐 Client Authentication & Demo Mode
+## 🚀 Key Application Modules
 
-The frontend authentication system (`client/src/app/AuthProvider.tsx`) features robust state hydration and environment configuration:
-
-- **`VITE_DEMO_MODE=true`**: Automatically falls back to `DEMO_USER` when local storage is empty, enabling instant evaluation without requiring manual credentials.
-- **`VITE_DEMO_MODE=false`** *(Production default)*: Requires actual authentication; unauthenticated visits cleanly redirect to `/login` without premature screen flash.
-- **Hydration Flag (`isHydrated`)**: Route guards render a full-screen skeleton while reading and validating persistent storage, eliminating flash of unauthenticated content.
-- **Storage Safety & Cross-Tab Sync**: All local storage reads/writes are protected against corrupted JSON and synchronize in real-time across multiple browser tabs via `window` storage events.
+1. **📊 Live Clinic Dashboard (`/app`)**:
+   - Live KPI cards: Today's appointments, slot utilization %, open escalations, pending reminders.
+   - Date range selector: `Today`, `Last 7 Days`, `30 Days` (linked to TanStack Query keys).
+   - Real Recharts status trends and procedure breakdown.
+   - 60s auto-refresh paused when the browser tab is hidden.
+2. **🔔 Staff Alerts & Escalation Center**:
+   - Header notification bell with live emergency alert badge count.
+   - Visual priority for `EMERGENCY` alerts with one-click **Acknowledge** action.
+   - Auto-refreshes every 30s.
+3. **📋 Clinical Care Protocols (`/app/care-protocols`)**:
+   - Filter by treatment and status (`Draft`, `Approved`, `Archived`).
+   - Immutable version policy: editing creates vN+1 while vN remains active.
+   - Doctor approval action visible to `DOCTOR`, `DENTIST`, and `CLINIC_OWNER`.
+   - Blocks approval if unresolved fasting or clinical placeholders remain.
+4. **🔔 Patient Care Reminders (`/app/reminders`)**:
+   - Status chips: `All`, `Failed`, `Skipped`, `Pending`, `Sent`.
+   - Direct **Retry Job** button for failed WhatsApp/SMS deliveries.
+   - Appointment detail drawer with live reminders tab.
+5. **🛡️ AI Triage Audit Logs (`/app/triage-logs`)**:
+   - Filter by urgency level (`EMERGENCY`, `URGENT`, `ROUTINE`, `NONE`).
+   - HIPAA-compliant automatic redaction of patient names, phone numbers, and PHI.
+6. **👥 Patients Directory (`/app/patients`)**:
+   - 300ms debounced search persisted in URL query parameters.
+   - Patient communication consent toggles (WhatsApp & SMS) on patient profile drawer.
+7. **⚙️ Clinic Practice Profile (`/app/settings`)**:
+   - Live configuration of practice name, primary phone, after-hours emergency hotline, and timezone.
+   - Real `GET` and `PATCH /api/clinic` integration.
 
 ---
 
-## 📄 Documentation Links
+## 🛠️ Verification & Build Commands
 
-- 📖 **[RUN_GUIDE.md](file:///c:/Users/paran/Downloads/Krina/dental-receptionist/dental-receptionist/RUN_GUIDE.md)** — Complete step-by-step developer guide.
-- 📋 **[one.md](file:///c:/Users/paran/Downloads/Krina/dental-receptionist/dental-receptionist/one.md)** — Project plan & blueprint specification.
+```bash
+# Verify client build (production Vite bundle)
+cd client && npm run build
+
+# Verify server type check
+cd server && npx tsc --noEmit
+```
+Both exit with **code 0** with zero compilation errors.

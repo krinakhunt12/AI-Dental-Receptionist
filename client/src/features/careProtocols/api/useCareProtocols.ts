@@ -6,8 +6,10 @@ import {
   getCareProtocol,
   getCarePlan,
   approveCareProtocol,
+  updateCareProtocol,
+  addCareInstruction,
 } from './careProtocolsApi';
-import { CareProtocol, CareProtocolFilters, CarePlan } from '../../../types';
+import { CareProtocol, CareProtocolFilters, CarePlan, CareInstruction } from '../../../types';
 
 export function useCareProtocols(filters?: CareProtocolFilters) {
   const { user, isHydrated } = useAuth();
@@ -67,3 +69,41 @@ export function useApproveProtocol() {
     },
   });
 }
+
+export function useUpdateCareProtocol() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const clinicId = user?.clinicId;
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { name?: string } }) => {
+      if (!clinicId) throw new Error('Clinic context required');
+      return updateCareProtocol(clinicId, id, data);
+    },
+    onSuccess: () => {
+      if (clinicId) {
+        queryClient.invalidateQueries({ queryKey: [clinicId, 'careProtocols'] });
+      }
+    },
+  });
+}
+
+export function useAddInstruction() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const clinicId = user?.clinicId;
+
+  return useMutation({
+    mutationFn: ({ protocolId, data }: { protocolId: string; data: Omit<CareInstruction, 'id' | 'clinicId' | 'protocolId'> }) => {
+      if (!clinicId) throw new Error('Clinic context required');
+      return addCareInstruction(clinicId, protocolId, data);
+    },
+    onSuccess: (_data, vars) => {
+      if (clinicId) {
+        queryClient.invalidateQueries({ queryKey: [clinicId, 'careProtocols'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.careProtocol(clinicId, vars.protocolId) });
+      }
+    },
+  });
+}
+

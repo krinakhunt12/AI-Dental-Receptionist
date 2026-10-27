@@ -24,4 +24,24 @@ export const queryKeys = {
     [clinicId, 'appointments', appointmentId, 'reminders'] as const,
   patientConsent: (clinicId: string, patientId: string) =>
     [clinicId, 'patients', patientId, 'consent'] as const,
+  dashboardSummary: (clinicId: string, range?: { from?: string; to?: string }) =>
+    [clinicId, 'dashboard', 'summary', range ?? {}] as const,
+  appointmentsTrend: (clinicId: string, range?: { from?: string; to?: string; interval?: string }) =>
+    [clinicId, 'dashboard', 'trend', range ?? {}] as const,
+  treatmentsBreakdown: (clinicId: string, range?: { from?: string; to?: string }) =>
+    [clinicId, 'dashboard', 'treatments', range ?? {}] as const,
+  dentistUtilization: (clinicId: string, range?: { from?: string; to?: string }) =>
+    [clinicId, 'dashboard', 'utilization', range ?? {}] as const,
+  aiReceptionist: (clinicId: string, range?: { from?: string; to?: string }) =>
+    [clinicId, 'dashboard', 'ai', range ?? {}] as const,
+  staffNotifications: (clinicId: string, unreadOnly?: boolean) =>
+    [clinicId, 'notifications', { unreadOnly: !!unreadOnly }] as const,
+  reminderJobs: (clinicId: string, filters?: { status?: string; page?: number; limit?: number }) =>
+    [clinicId, 'reminderJobs', filters ?? {}] as const,
+  triageLogs: (clinicId: string, filters?: { urgency?: string; page?: number; limit?: number }) =>
+    [clinicId, 'triageLogs', filters ?? {}] as const,
+  clinicProfile: (clinicId: string) =>
+    [clinicId, 'clinic', 'profile'] as const,
+  teamUsers: (clinicId: string) =>
+    [clinicId, 'team', 'users'] as const,
 };

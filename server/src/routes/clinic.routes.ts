@@ -14,12 +14,21 @@ const router = Router();
 
 router.use(authenticate);
 
-// Clinic self-management endpoints (/api/v1/clinics/me)
+// Clinic self-management endpoints (/clinics/me and /clinic)
 router.get('/me', tenantScope, ClinicController.getProfile);
 
 router.patch(
   '/me',
-  authorizeRoles(Role.CLINIC_ADMIN, Role.SUPER_ADMIN),
+  authorizeRoles(Role.CLINIC_ADMIN, Role.CLINIC_OWNER, Role.SUPER_ADMIN),
+  tenantScope,
+  validateRequest(updateClinicSchema),
+  ClinicController.updateProfile
+);
+
+router.get('/profile', tenantScope, ClinicController.getProfile);
+router.patch(
+  '/profile',
+  authorizeRoles(Role.CLINIC_ADMIN, Role.CLINIC_OWNER, Role.SUPER_ADMIN),
   tenantScope,
   validateRequest(updateClinicSchema),
   ClinicController.updateProfile

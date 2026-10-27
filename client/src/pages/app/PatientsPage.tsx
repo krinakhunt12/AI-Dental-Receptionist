@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { usePatients } from '../../features/patients/api';
+import { useUpdateConsent } from '../../features/appointments/hooks/useReminders';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -7,16 +9,73 @@ import { Drawer } from '../../components/ui/Drawer';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
+import { Toggle } from '../../components/ui/Toggle';
 import { useUIStore } from '../../store/useUIStore';
-import { Search, Download, Plus, User, Phone, Mail, Calendar, FileText } from 'lucide-react';
+import { Search, Download, Plus, User, Phone, Mail, Calendar, FileText, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react';
 
 export const PatientsPage: React.FC = () => {
-  const [query, setQuery] = useState('');
-  const { data: patients = [], isLoading, isError, refetch } = usePatients({ search: query });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+
+  const [queryInput, setQueryInput] = useState(initialSearch);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialSearch);
+
+  // 300ms debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(queryInput);
+      setSearchParams(queryInput ? { search: queryInput } : {}, { replace: true });
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [queryInput, setSearchParams]);
+
+  const { data: patients = [], isLoading, isError, refetch } = usePatients({ search: debouncedQuery });
+  const updateConsentMutation = useUpdateConsent();
   const { addToast } = useUIStore();
+
   const [selectedPatId, setSelectedPatId] = useState<string | null>(null);
 
+  // Consent states for selected patient
+  const [waConsent, setWaConsent] = useState(true);
+  const [smsConsent, setSmsConsent] = useState(true);
+
   const selectedPatient = patients.find((p) => p.id === selectedPatId);
+
+  const handleToggleConsent = (channel: 'WHATSAPP' | 'SMS', currentVal: boolean) => {
+    if (!selectedPatient) return;
+    const nextStatus = currentVal ? 'OPTED_OUT' : 'OPTED_IN';
+
+    if (channel === 'WHATSAPP') setWaConsent(!currentVal);
+    else setSmsConsent(!currentVal);
+
+    updateConsentMutation.mutate(
+      {
+        patientId: selectedPatient.id,
+        channel,
+        status: nextStatus,
+        source: 'STAFF_TOGGLE',
+      },
+      {
+        onSuccess: () => {
+          addToast({
+            type: 'success',
+            title: `${channel} Consent Updated`,
+            message: `Patient ${selectedPatient.name} is now ${nextStatus === 'OPTED_IN' ? 'Subscribed' : 'Opted Out'}.`,
+          });
+        },
+        onError: (err: any) => {
+          // Revert on error
+          if (channel === 'WHATSAPP') setWaConsent(currentVal);
+          else setSmsConsent(currentVal);
+          addToast({
+            type: 'error',
+            title: 'Failed to update consent',
+            message: err?.message || 'Could not update consent state.',
+          });
+        },
+      }
+    );
+  };
 
   const handleExportCSV = () => {
     addToast({
@@ -31,7 +90,7 @@ export const PatientsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Patients Directory</h1>
-          <p className="text-xs text-slate-500">Manage patient records, tags, and AI chat histories.</p>
+          <p className="text-xs text-slate-500">Manage patient records, communication consent, and appointment history.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -47,9 +106,9 @@ export const PatientsPage: React.FC = () => {
       <div className="max-w-md">
         <Input
           icon={Search}
-          placeholder="Search by name, phone, or email..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, phone, or email (300ms debounce)..."
+          value={queryInput}
+          onChange={(e) => setQueryInput(e.target.value)}
         />
       </div>
 
@@ -80,13 +139,13 @@ export const PatientsPage: React.FC = () => {
           icon={User}
           title="No Patients Found"
           description={
-            query
-              ? `No patient records match the search "${query}". Try another query.`
+            debouncedQuery
+              ? `No patient records match the search "${debouncedQuery}". Try another query.`
               : 'No patient profiles exist in the system yet. Register your first patient to begin.'
           }
-          actionLabel={query ? 'Clear Search' : 'Add New Patient'}
-          onAction={query ? () => setQuery('') : () => addToast({ type: 'info', title: 'Add Patient Modal' })}
-          actionIcon={query ? undefined : Plus}
+          actionLabel={debouncedQuery ? 'Clear Search' : 'Add New Patient'}
+          onAction={debouncedQuery ? () => setQueryInput('') : () => addToast({ type: 'info', title: 'Add Patient Modal' })}
+          actionIcon={debouncedQuery ? undefined : Plus}
         />
       )}
 
@@ -109,7 +168,11 @@ export const PatientsPage: React.FC = () => {
                 {patients.map((pat) => (
                   <tr
                     key={pat.id}
-                    onClick={() => setSelectedPatId(pat.id)}
+                    onClick={() => {
+                      setSelectedPatId(pat.id);
+                      setWaConsent(true);
+                      setSmsConsent(true);
+                    }}
                     className="hover:bg-teal-50/50 cursor-pointer transition-colors"
                   >
                     <td className="p-4">
@@ -165,8 +228,48 @@ export const PatientsPage: React.FC = () => {
               <p><strong>Total Appointments:</strong> {selectedPatient.totalVisits ?? 1}</p>
             </div>
 
+            {/* Notification Consent Toggles (WhatsApp / SMS) */}
+            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-4">
+              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                Notification Consent Preferences (TCPA / GDPR)
+              </h4>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                  <div>
+                    <span className="font-bold text-slate-800 block">WhatsApp Care Reminders</span>
+                    <span className="text-[11px] text-slate-500">
+                      Receive pre-op fasting and post-op care guidance on WhatsApp
+                    </span>
+                  </div>
+                </div>
+                <Toggle
+                  checked={waConsent}
+                  onChange={() => handleToggleConsent('WHATSAPP', waConsent)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-sky-600" />
+                  <div>
+                    <span className="font-bold text-slate-800 block">SMS Care Reminders</span>
+                    <span className="text-[11px] text-slate-500">
+                      Receive backup SMS reminder messages and critical schedule alerts
+                    </span>
+                  </div>
+                </div>
+                <Toggle
+                  checked={smsConsent}
+                  onChange={() => handleToggleConsent('SMS', smsConsent)}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <h4 className="font-bold text-slate-900">Patient Notes</h4>
+              <h4 className="font-bold text-slate-900">Clinical Patient Notes</h4>
               <textarea
                 className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-500"
                 rows={3}

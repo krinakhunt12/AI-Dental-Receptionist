@@ -1,24 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAppointments, useUpdateAppointment, useCancelAppointment } from '../../features/appointments/api';
 import { useDentists } from '../../features/dentists/api';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Select } from '../../components/ui/Select';
+import { Input } from '../../components/ui/Input';
 import { Drawer } from '../../components/ui/Drawer';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { useUIStore } from '../../store/useUIStore';
-import { Calendar as CalendarIcon, Clock, User, Plus, Filter, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Plus, Filter, CheckCircle2, Search } from 'lucide-react';
 import { AppointmentRemindersSection } from '../../features/appointments/components/AppointmentRemindersSection';
 
 export const AppointmentsPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialDoctor = searchParams.get('doctor') || 'ALL';
+  const initialStatus = searchParams.get('status') || 'ALL';
+  const initialSearch = searchParams.get('search') || '';
+
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(initialDoctor);
+  const [selectedStatus, setSelectedStatus] = useState<string>(initialStatus);
+  const [searchInput, setSearchInput] = useState<string>(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(initialSearch);
+
+  // 300ms debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      const params: Record<string, string> = {};
+      if (selectedDoctorId !== 'ALL') params.doctor = selectedDoctorId;
+      if (selectedStatus !== 'ALL') params.status = selectedStatus;
+      if (searchInput) params.search = searchInput;
+      setSearchParams(params, { replace: true });
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchInput, selectedDoctorId, selectedStatus, setSearchParams]);
+
   const {
     data: appointments = [],
     isLoading: isLoadingAppts,
     isError: isErrorAppts,
     refetch: refetchAppts,
-  } = useAppointments();
+  } = useAppointments({
+    doctorId: selectedDoctorId === 'ALL' ? undefined : selectedDoctorId,
+    status: selectedStatus === 'ALL' ? undefined : selectedStatus,
+    search: debouncedSearch || undefined,
+  });
 
   const {
     data: doctors = [],
@@ -32,7 +61,6 @@ export const AppointmentsPage: React.FC = () => {
   const { addToast } = useUIStore();
 
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string>('ALL');
   const [selectedAptId, setSelectedAptId] = useState<string | null>(null);
 
   const isLoading = isLoadingAppts || isLoadingDoctors;
@@ -43,9 +71,7 @@ export const AppointmentsPage: React.FC = () => {
     refetchDoctors();
   };
 
-  const filteredApts = appointments.filter(
-    (a) => selectedDoctorId === 'ALL' || a.doctorId === selectedDoctorId
-  );
+  const filteredApts = appointments;
 
   const selectedApt = appointments.find((a) => a.id === selectedAptId);
 
@@ -81,7 +107,16 @@ export const AppointmentsPage: React.FC = () => {
           <p className="text-xs text-slate-500">Manage patient slots, doctor schedules, and status chips.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-48 sm:w-60">
+            <Input
+              icon={Search}
+              placeholder="Search appointments..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+
           <Select
             value={selectedDoctorId}
             onChange={(e) => setSelectedDoctorId(e.target.value)}
@@ -91,20 +126,30 @@ export const AppointmentsPage: React.FC = () => {
             ]}
           />
 
+          <Select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            options={[
+              { value: 'ALL', label: 'All Statuses' },
+              { value: 'Confirmed', label: 'Confirmed' },
+              { value: 'Pending', label: 'Pending' },
+              { value: 'Completed', label: 'Completed' },
+              { value: 'Cancelled', label: 'Cancelled' },
+            ]}
+          />
+
           <div className="inline-flex p-1 bg-slate-200/70 rounded-xl">
             <button
               onClick={() => setViewMode('calendar')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                viewMode === 'calendar' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600'
-              }`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${viewMode === 'calendar' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600'
+                }`}
             >
               Calendar
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                viewMode === 'list' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600'
-              }`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-600'
+                }`}
             >
               List View
             </button>
@@ -188,8 +233,8 @@ export const AppointmentsPage: React.FC = () => {
                               apt.status === 'Confirmed'
                                 ? 'success'
                                 : apt.status === 'Cancelled'
-                                ? 'danger'
-                                : 'warning'
+                                  ? 'danger'
+                                  : 'warning'
                             }
                           >
                             {apt.status}
@@ -219,64 +264,64 @@ export const AppointmentsPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 uppercase sticky top-0 z-10 shadow-2xs">
-                <tr>
-                  <th className="p-4">Patient</th>
-                  <th className="p-4">Doctor</th>
-                  <th className="p-4">Treatment</th>
-                  <th className="p-4">Date & Time</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredApts.map((apt) => (
-                  <tr key={apt.id} className="hover:bg-slate-50">
-                    <td className="p-4 font-bold text-slate-900">{apt.patientName}</td>
-                    <td className="p-4 text-slate-600">{apt.doctorName}</td>
-                    <td className="p-4 text-slate-600">{apt.treatment}</td>
-                    <td className="p-4 font-semibold text-slate-800">
-                      {apt.date} @ {apt.time}
-                    </td>
-                    <td className="p-4">
-                      <Badge
-                        variant={
-                          apt.status === 'Confirmed'
-                            ? 'success'
-                            : apt.status === 'Cancelled'
-                            ? 'danger'
-                            : 'warning'
-                        }
-                      >
-                        {apt.status}
-                      </Badge>
-                    </td>
-                    <td className="p-4 text-right space-x-2">
-                      {apt.status !== 'Confirmed' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            updateAppointmentMut.mutate({ id: apt.id, data: { status: 'Confirmed' } })
+                  <tr>
+                    <th className="p-4">Patient</th>
+                    <th className="p-4">Doctor</th>
+                    <th className="p-4">Treatment</th>
+                    <th className="p-4">Date & Time</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredApts.map((apt) => (
+                    <tr key={apt.id} className="hover:bg-slate-50">
+                      <td className="p-4 font-bold text-slate-900">{apt.patientName}</td>
+                      <td className="p-4 text-slate-600">{apt.doctorName}</td>
+                      <td className="p-4 text-slate-600">{apt.treatment}</td>
+                      <td className="p-4 font-semibold text-slate-800">
+                        {apt.date} @ {apt.time}
+                      </td>
+                      <td className="p-4">
+                        <Badge
+                          variant={
+                            apt.status === 'Confirmed'
+                              ? 'success'
+                              : apt.status === 'Cancelled'
+                                ? 'danger'
+                                : 'warning'
                           }
                         >
-                          Confirm
-                        </Button>
-                      )}
-                      {apt.status !== 'Cancelled' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-rose-600 hover:text-rose-700"
-                          onClick={() => cancelAppointmentMut.mutate(apt.id)}
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          {apt.status}
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        {apt.status !== 'Confirmed' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              updateAppointmentMut.mutate({ id: apt.id, data: { status: 'Confirmed' } })
+                            }
+                          >
+                            Confirm
+                          </Button>
+                        )}
+                        {apt.status !== 'Cancelled' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-rose-600 hover:text-rose-700"
+                            onClick={() => cancelAppointmentMut.mutate(apt.id)}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )
@@ -304,8 +349,8 @@ export const AppointmentsPage: React.FC = () => {
                     selectedApt.status === 'Confirmed'
                       ? 'success'
                       : selectedApt.status === 'Cancelled'
-                      ? 'danger'
-                      : 'warning'
+                        ? 'danger'
+                        : 'warning'
                   }
                 >
                   {selectedApt.status}

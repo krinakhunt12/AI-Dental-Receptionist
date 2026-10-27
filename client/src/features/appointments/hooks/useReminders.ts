@@ -3,6 +3,7 @@ import { useAuth } from '../../../app/AuthProvider';
 import { queryKeys } from '../../../lib/queryKeys';
 import {
   getAppointmentReminders,
+  getReminderJobs,
   retryReminderJob,
   updateNotificationConsent,
 } from '../api/remindersApi';
@@ -86,3 +87,21 @@ export function useUpdateConsent() {
     },
   });
 }
+
+/**
+ * Hook to fetch paginated reminder jobs for the entire clinic.
+ */
+export function useReminderJobs(filters?: { status?: string; page?: number; limit?: number }) {
+  const { user, isHydrated } = useAuth();
+  const clinicId = user?.clinicId || 'clinic_smilecare_01';
+  const isEnabled = Boolean(isHydrated && clinicId);
+
+  return useQuery<{ jobs: ReminderJob[]; total: number; page: number; limit: number }>({
+    queryKey: queryKeys.reminderJobs(clinicId, filters),
+    queryFn: () => getReminderJobs(clinicId, filters),
+    enabled: isEnabled,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+}
+

@@ -30,10 +30,14 @@ export class AppointmentController {
       if (!req.clinicId) throw ApiError.unauthorized('Clinic context missing');
       const page = parseInt(String(req.query.page || '1'), 10);
       const limit = parseInt(String(req.query.limit || '10'), 10);
-      const doctorId = req.query.doctorId ? String(req.query.doctorId) : undefined;
+      const doctorId = (req.query.doctorId || req.query.dentistId) ? String(req.query.doctorId || req.query.dentistId) : undefined;
       const patientId = req.query.patientId ? String(req.query.patientId) : undefined;
       const status = req.query.status ? (req.query.status as AppointmentStatus) : undefined;
       const date = req.query.date ? String(req.query.date) : undefined;
+      const from = req.query.from ? String(req.query.from) : undefined;
+      const to = req.query.to ? String(req.query.to) : undefined;
+      const search = req.query.search ? String(req.query.search) : undefined;
+      const sort = req.query.sort === 'desc' ? 'desc' : 'asc';
 
       const result = await AppointmentService.listAppointments(
         req.clinicId,
@@ -42,7 +46,11 @@ export class AppointmentController {
         doctorId,
         patientId,
         status,
-        date
+        date,
+        from,
+        to,
+        search,
+        sort
       );
 
       res.status(200).json({ success: true, data: result });
@@ -65,12 +73,12 @@ export class AppointmentController {
   static async getAvailableSlots(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.clinicId) throw ApiError.unauthorized('Clinic context missing');
-      const doctorId = req.query.doctorId ? String(req.query.doctorId) : undefined;
+      const doctorId = (req.query.doctorId || req.query.dentistId) ? String(req.query.doctorId || req.query.dentistId) : undefined;
       const date = req.query.date ? String(req.query.date) : undefined;
       const durationMins = parseInt(String(req.query.durationMins || '30'), 10);
 
       if (!doctorId || !date) {
-        throw ApiError.badRequest('doctorId and date (YYYY-MM-DD) query parameters are required');
+        throw ApiError.badRequest('doctorId (or dentistId) and date (YYYY-MM-DD) query parameters are required');
       }
 
       const slots = await SlotService.getAvailableSlots(req.clinicId, doctorId, date, durationMins);
@@ -85,6 +93,30 @@ export class AppointmentController {
       if (!req.clinicId) throw ApiError.unauthorized('Clinic context missing');
       const appointment = await AppointmentService.createAppointment(req.clinicId, req.body);
       res.status(201).json({ success: true, message: 'Appointment booked', data: appointment });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async update(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.clinicId) throw ApiError.unauthorized('Clinic context missing');
+      const id = String(req.params.id);
+      const { startTime, endTime, status, notes } = req.body;
+
+      let updated;
+      if (startTime && endTime) {
+        updated = await AppointmentService.rescheduleAppointment(req.clinicId, id, startTime, endTime);
+      }
+      if (status) {
+        updated = await AppointmentService.updateAppointmentStatus(req.clinicId, id, status, notes);
+      }
+
+      if (!updated) {
+        updated = await AppointmentService.getAppointmentById(req.clinicId, id);
+      }
+
+      res.status(200).json({ success: true, message: 'Appointment updated successfully', data: updated });
     } catch (error) {
       next(error);
     }

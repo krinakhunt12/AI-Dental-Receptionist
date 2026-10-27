@@ -701,11 +701,11 @@ export const mockDb = {
           lastError?: string;
           skipReason?: string;
         }> = [
-          { status: 'SENT' },
-          { status: 'PENDING' },
-          { status: 'FAILED', lastError: 'Provider timeout: network failure after 3 attempts' },
-          { status: 'SKIPPED', skipReason: 'Patient has no OPTED_IN consent for SMS' },
-        ];
+            { status: 'SENT' },
+            { status: 'PENDING' },
+            { status: 'FAILED', lastError: 'Provider timeout: network failure after 3 attempts' },
+            { status: 'SKIPPED', skipReason: 'Patient has no OPTED_IN consent for SMS' },
+          ];
 
         let statusIdx = 0;
         for (const inst of carePlan.instructions) {
@@ -804,8 +804,242 @@ export const mockDb = {
 
     return consent;
   },
+
+  async getDashboardSummary(clinicId: string, _range?: { from?: string; to?: string }) {
+    const apts = await this.getAppointments(clinicId);
+    const today = new Date().toISOString().split('T')[0];
+    const todayApts = apts.filter((a) => a.date === today);
+
+    return {
+      todayAppointmentsCount: todayApts.length || 5,
+      upcomingCount: apts.filter((a) => a.status === 'Confirmed').length || 18,
+      newPatientsCount: 7,
+      cancellationsCount: apts.filter((a) => a.status === 'Cancelled').length || 2,
+      noShowsCount: 1,
+      completedCount: apts.filter((a) => a.status === 'Completed').length || 12,
+      slotUtilizationPercent: 78,
+      pendingRemindersCount: reminderJobsStore.filter((j) => j.status === 'PENDING').length || 4,
+      failedRemindersCount: reminderJobsStore.filter((j) => j.status === 'FAILED').length || 1,
+      openEscalationsCount: staffNotificationsStore.filter((n) => !n.isRead).length || 2,
+    };
+  },
+
+  async getAppointmentsTrend(clinicId: string, _range?: { from?: string; to?: string; interval?: string }) {
+    return [
+      { date: '2026-10-21', confirmed: 18, completed: 22, cancelled: 1, noShow: 0, total: 30 },
+      { date: '2026-10-22', confirmed: 24, completed: 28, cancelled: 2, noShow: 1, total: 38 },
+      { date: '2026-10-23', confirmed: 30, completed: 34, cancelled: 1, noShow: 0, total: 43 },
+      { date: '2026-10-24', confirmed: 36, completed: 42, cancelled: 3, noShow: 1, total: 60 },
+      { date: '2026-10-25', confirmed: 32, completed: 38, cancelled: 2, noShow: 0, total: 50 },
+      { date: '2026-10-26', confirmed: 20, completed: 26, cancelled: 1, noShow: 0, total: 36 },
+      { date: '2026-10-27', confirmed: 12, completed: 15, cancelled: 0, noShow: 0, total: 20 },
+    ];
+  },
+
+  async getTreatmentsBreakdown(clinicId: string, _range?: { from?: string; to?: string }) {
+    return [
+      { treatmentName: 'Routine Checkup & Teeth Cleaning', count: 45, color: '#0d9488' },
+      { treatmentName: 'Invisalign & Clear Aligners', count: 30, color: '#0ea5e9' },
+      { treatmentName: 'Root Canal Therapy', count: 15, color: '#6366f1' },
+      { treatmentName: 'Emergency Tooth Extraction', count: 10, color: '#f59e0b' },
+    ];
+  },
+
+  async getDentistUtilization(clinicId: string, _range?: { from?: string; to?: string }) {
+    const docs = await this.getDentists(clinicId);
+    return docs.map((d, i) => ({
+      dentistId: d.id,
+      name: d.name,
+      specialty: d.specialty || 'Dentist',
+      bookedSlots: [18, 14, 16][i % 3] || 15,
+      availableSlots: 20,
+      utilizationRate: [90, 70, 80][i % 3] || 75,
+    }));
+  },
+
+  async getAiReceptionistMetrics(_clinicId: string, _range?: { from?: string; to?: string }) {
+    return {
+      conversationsHandled: 42,
+      bookingsMadeByAi: 18,
+      escalationsCount: 2,
+      triageUrgencyCounts: { NONE: 34, ROUTINE: 14, URGENT: 6, EMERGENCY: 2 },
+    };
+  },
+
+  async getStaffNotifications(clinicId: string, unreadOnly = false) {
+    let list = staffNotificationsStore.filter((n) => !n.clinicId || n.clinicId === clinicId);
+    if (unreadOnly) {
+      list = list.filter((n) => !n.isRead);
+    }
+    return list;
+  },
+
+  async acknowledgeStaffNotification(clinicId: string, id: string) {
+    const notif = staffNotificationsStore.find((n) => n.id === id);
+    if (notif) {
+      notif.isRead = true;
+      notif.updatedAt = new Date().toISOString();
+    }
+    return notif as any;
+  },
+
+  async getReminderJobs(clinicId: string, filters?: { status?: string; page?: number; limit?: number }) {
+    let list = reminderJobsStore.filter((j) => !j.clinicId || j.clinicId === clinicId);
+    if (filters?.status) {
+      list = list.filter((j) => j.status === filters.status);
+    }
+    if (list.length === 0) {
+      list = [
+        {
+          id: 'rem_1',
+          clinicId,
+          appointmentId: 'apt_1',
+          patientId: 'pat_1',
+          instructionId: 'i1',
+          channel: 'WHATSAPP' as any,
+          status: 'PENDING' as any,
+          sendAt: new Date(Date.now() + 3600000).toISOString(),
+          attempts: 0,
+          instruction: { id: 'i1', title: '24h Pre-Op Reminder', body: 'Fasting guideline: please refrain from food 6h before.', phase: 'PRE_OP', category: 'FASTING', isCritical: true, offsetMinutes: -1440 },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'rem_2',
+          clinicId,
+          appointmentId: 'apt_2',
+          patientId: 'pat_2',
+          instructionId: 'i2',
+          channel: 'SMS' as any,
+          status: 'FAILED' as any,
+          lastError: 'Provider timeout: SMS gateway busy',
+          sendAt: new Date(Date.now() - 1800000).toISOString(),
+          attempts: 3,
+          instruction: { id: 'i2', title: 'Post-Op Extraction Rinse', body: 'Gentle warm salt water rinse.', phase: 'POST_OP', category: 'HYGIENE', isCritical: false, offsetMinutes: 120 },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+    }
+    return {
+      jobs: list,
+      total: list.length,
+      page: filters?.page || 1,
+      limit: filters?.limit || 20,
+    };
+  },
+
+  async getTriageLogs(clinicId: string, filters?: { urgency?: string; page?: number; limit?: number }) {
+    let list = triageLogsStore.filter((l) => !l.clinicId || l.clinicId === clinicId);
+    if (filters?.urgency) {
+      list = list.filter((l) => l.urgency === filters.urgency);
+    }
+    if (list.length === 0) {
+      list = [
+        {
+          id: 'tri_1',
+          clinicId,
+          patientId: 'pat_1',
+          urgency: 'EMERGENCY' as any,
+          escalated: true,
+          symptomKeys: ['severe_throbbing_pain', 'swelling'],
+          messageSnippet: 'Severe pain on lower molar after extraction... [REDACTED]',
+          createdAt: new Date(Date.now() - 300000).toISOString(),
+        },
+        {
+          id: 'tri_2',
+          clinicId,
+          patientId: 'pat_2',
+          urgency: 'URGENT' as any,
+          escalated: true,
+          symptomKeys: ['mild_bleeding'],
+          messageSnippet: 'Bleeding won\'t stop completely... [REDACTED]',
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+      ];
+    }
+    return {
+      logs: list.map((l) => ({
+        id: l.id,
+        createdAt: l.createdAt,
+        urgency: l.urgency as any,
+        symptomKeys: l.symptomKeys,
+        escalated: l.escalated,
+        redactedText: l.messageSnippet || 'Patient statement... [REDACTED]',
+      })),
+      total: list.length,
+      page: filters?.page || 1,
+      limit: filters?.limit || 25,
+    };
+  },
+
+  async getClinicProfile(clinicId: string) {
+    return {
+      id: clinicId,
+      name: 'SmileCare Dental Clinic',
+      email: 'contact@smilecare.ai',
+      phone: '+1 (555) 234-5678',
+      emergencyPhone: '+1 (555) 999-4321',
+      address: '100 Medical Center Blvd, Suite 400',
+      timezone: 'America/New_York',
+      logoUrl: '',
+      workingHours: [
+        { dayOfWeek: 1, startTime: '09:00', endTime: '18:00', isClosed: false },
+        { dayOfWeek: 2, startTime: '09:00', endTime: '18:00', isClosed: false },
+        { dayOfWeek: 3, startTime: '09:00', endTime: '18:00', isClosed: false },
+        { dayOfWeek: 4, startTime: '09:00', endTime: '18:00', isClosed: false },
+        { dayOfWeek: 5, startTime: '09:00', endTime: '17:00', isClosed: false },
+        { dayOfWeek: 6, startTime: '10:00', endTime: '14:00', isClosed: false },
+        { dayOfWeek: 0, startTime: '00:00', endTime: '00:00', isClosed: true },
+      ],
+    };
+  },
+
+  async updateClinicProfile(clinicId: string, data: any) {
+    return {
+      ...await this.getClinicProfile(clinicId),
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+  },
+
+  async getTeamUsers(_clinicId: string) {
+    return [
+      { id: 'usr_1', name: 'Dr. Krina Mehta', email: 'krina@smilecare.ai', role: 'OWNER', status: 'Active' },
+      { id: 'usr_2', name: 'Rahul Verma', email: 'reception@smilecare.ai', role: 'RECEPTIONIST', status: 'Active' },
+      { id: 'usr_3', name: 'Dr. Ananya Sharma', email: 'ananya@smilecare.ai', role: 'DENTIST', status: 'Active' },
+    ];
+  },
 };
+
+const staffNotificationsStore: any[] = [
+  {
+    id: 'notif_1',
+    clinicId: DEFAULT_CLINIC_ID,
+    patientId: 'pat_1',
+    patient: { id: 'pat_1', firstName: 'Priya', lastName: 'Sharma', phone: '+91 98765 43210' },
+    title: 'Emergency Toothache Alert',
+    message: 'Priya Sharma reported severe throbbing pain on right jaw!',
+    severity: 'EMERGENCY',
+    isRead: false,
+    createdAt: new Date(Date.now() - 300000).toISOString(),
+    updatedAt: new Date(Date.now() - 300000).toISOString(),
+  },
+  {
+    id: 'notif_2',
+    clinicId: DEFAULT_CLINIC_ID,
+    patientId: 'pat_2',
+    patient: { id: 'pat_2', firstName: 'Rahul', lastName: 'Verma', phone: '+91 98111 22334' },
+    title: 'Failed Reminder Delivery',
+    message: 'SMS delivery failed for 24h pre-op extraction reminder.',
+    severity: 'WARNING',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+];
+
+const triageLogsStore: any[] = [];
 
 const reminderJobsStore: ReminderJob[] = [];
 const notificationConsentsStore: NotificationConsent[] = [];
-

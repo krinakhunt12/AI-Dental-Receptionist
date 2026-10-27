@@ -79,6 +79,24 @@ export const APP_NAV_GROUPS: NavGroup[] = [
         requiredFeature: 'campaignsEnabled',
       },
       {
+        id: 'care-protocols',
+        label: 'Care Protocols',
+        path: '/app/care-protocols',
+        iconName: 'FileText',
+      },
+      {
+        id: 'reminders',
+        label: 'Care Reminders',
+        path: '/app/reminders',
+        iconName: 'Bell',
+      },
+      {
+        id: 'triage-logs',
+        label: 'Triage Audit Logs',
+        path: '/app/triage-logs',
+        iconName: 'ShieldAlert',
+      },
+      {
         id: 'analytics',
         label: 'Analytics & Reports',
         path: '/app/analytics',

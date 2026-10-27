@@ -28,6 +28,9 @@ const DoctorsPage = lazy(() => import('./pages/app/DoctorsPage').then((m) => ({ 
 const KnowledgeBasePage = lazy(() => import('./pages/app/KnowledgeBasePage').then((m) => ({ default: m.KnowledgeBasePage })));
 const CampaignsPage = lazy(() => import('./pages/app/CampaignsPage').then((m) => ({ default: m.CampaignsPage })));
 const AnalyticsPage = lazy(() => import('./pages/app/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
+const CareProtocolsPage = lazy(() => import('./pages/app/CareProtocolsPage').then((m) => ({ default: m.CareProtocolsPage })));
+const RemindersOverviewPage = lazy(() => import('./pages/app/RemindersOverviewPage').then((m) => ({ default: m.RemindersOverviewPage })));
+const TriageLogsPage = lazy(() => import('./pages/app/TriageLogsPage').then((m) => ({ default: m.TriageLogsPage })));
 const WidgetPage = lazy(() => import('./pages/app/WidgetPage').then((m) => ({ default: m.WidgetPage })));
 const AISettingsPage = lazy(() => import('./pages/app/AISettingsPage').then((m) => ({ default: m.AISettingsPage })));
 const BillingPage = lazy(() => import('./pages/app/BillingPage').then((m) => ({ default: m.BillingPage })));
@@ -164,6 +167,18 @@ export const router = createBrowserRouter([
             </RequireFeature>
           </RequireRole>
         ),
+      },
+      {
+        path: 'care-protocols',
+        element: withSuspense(CareProtocolsPage),
+      },
+      {
+        path: 'reminders',
+        element: withSuspense(RemindersOverviewPage),
+      },
+      {
+        path: 'triage-logs',
+        element: withSuspense(TriageLogsPage),
       },
       {
         path: 'analytics',

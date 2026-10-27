@@ -7,7 +7,13 @@ import {
   triageClinicRateLimiter,
 } from '../middlewares/triageRateLimit.js';
 
+import { authenticate } from '../middlewares/auth.middleware.js';
+import { tenantScope } from '../middlewares/tenant.middleware.js';
+
 const router = Router();
+
+// GET /triage/logs - Authenticated staff triage logs view
+router.get('/logs', authenticate, tenantScope, TriageController.listLogs);
 
 // POST /triage/message
 // Patient & clinic rate-limited, validated, clinic-scoped

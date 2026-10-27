@@ -31,6 +31,11 @@ router.post(
   AppointmentController.create
 );
 router.patch(
+  '/:id',
+  logAudit('APPOINTMENT_UPDATE', 'Appointment'),
+  AppointmentController.update
+);
+router.patch(
   '/:id/status',
   logAudit('APPOINTMENT_STATUS_CHANGE', 'Appointment'),
   validateRequest(updateStatusSchema),

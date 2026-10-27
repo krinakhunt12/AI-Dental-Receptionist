@@ -23,6 +23,57 @@ export const retryJobSchema = z.object({
 
 export class ReminderController {
   /**
+   * GET /reminder-jobs
+   * Lists all reminder jobs for the clinic with status filter and pagination.
+   */
+  static async listJobs(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.clinicId) throw ApiError.unauthorized('Clinic context missing');
+      const page = parseInt(String(req.query.page || '1'), 10);
+      const limit = parseInt(String(req.query.limit || '20'), 10);
+      const status = req.query.status ? (req.query.status as ReminderJobStatus) : undefined;
+      const skip = (page - 1) * limit;
+
+      const where: any = {
+        clinicId: req.clinicId,
+      };
+
+      if (status) {
+        where.status = status;
+      }
+
+      const [jobs, total] = await Promise.all([
+        prisma.reminderJob.findMany({
+          where,
+          include: {
+            patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
+            appointment: { select: { id: true, startTime: true, status: true } },
+            instruction: { select: { id: true, title: true, phase: true, category: true, isCritical: true } },
+          },
+          orderBy: { sendAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        prisma.reminderJob.count({ where }),
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          jobs,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
    * GET /appointments/:id/reminders
    * Returns all reminder jobs for a specific appointment, strictly clinic-scoped.
    */

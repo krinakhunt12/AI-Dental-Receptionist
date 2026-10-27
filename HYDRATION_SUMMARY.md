@@ -237,8 +237,33 @@ In dental medicine, **hydration** is fundamental to oral pathophysiology, treatm
 ## 5. 🛠️ Best Practices & Cheat Sheet
 
 ### Summary Checklist for Developers:
-- [ ] **DOM Hydration**: Keep server and client initial render output identical; isolate browser-specific code inside `useEffect` or client-only boundaries.
-- [ ] **State Hydration**: Always handle the initial loading/unhydrated phase gracefully when reading from `localStorage` to avoid flash of wrong content (FOUC).
-- [ ] **Data Cache**: Use TanStack `HydrationBoundary` to pass server-fetched queries directly to the client without redundant refetches.
-- [ ] **Database**: Verify relational models and enums are properly typed through Prisma client generation (`prisma generate`).
-- [ ] **Clinical Triage**: When AI receptionist encounters queries regarding dry mouth or post-extraction healing, advise proper hydration while alerting patients never to drink through straws after extractions.
+- [x] **DOM Hydration**: Keep server and client initial render output identical; isolate browser-specific code inside `useEffect` or client-only boundaries.
+- [x] **State Hydration**: Always handle the initial loading/unhydrated phase gracefully when reading from `localStorage` to avoid flash of wrong content (FOUC).
+- [x] **Data Cache**: Use TanStack `HydrationBoundary` to pass server-fetched queries directly to the client without redundant refetches.
+- [x] **Database**: Verify relational models and enums are properly typed through Prisma client generation (`prisma generate`).
+- [x] **Clinical Triage**: When AI receptionist encounters queries regarding dry mouth or post-extraction healing, advise proper hydration while alerting patients never to drink through straws after extractions.
+
+---
+
+## 6. 🚀 SmileCare AI Client Auth Hydration & Real API Migration (Task 6)
+
+### 6.1 Client Auth Hydration Architecture (`isHydrated`)
+In SmileCare AI, authentication state is maintained via `AuthProvider.tsx`:
+1. **Zero-FOUC Guarantee**: On initial boot, `isHydrated` starts as `false`. Route guards (`RequireAuth`, `RequireRole`) display a sleek full-screen clinic loading skeleton while storage tokens are verified.
+2. **Corrupted Storage Shield**: Token parsing is wrapped in strict `try/catch` handlers that automatically purge corrupted strings and reset auth safely.
+3. **Cross-Tab Synchronization**: A native `window.addEventListener('storage', ...)` listener synchronizes logout or role changes in real time across browser tabs.
+
+### 6.2 Removal of Static & Mock Data
+All hardcoded dashboard constants and fake arrays were completely removed from React components:
+- **`OverviewPage.tsx`**: Removed fake `trendData`, `sourceData`, `topQuestions`, and `peakHours` arrays. Wired to real `useDashboardSummary`, `useAppointmentsTrend`, `useTreatmentsBreakdown`, and `useAiReceptionist` hooks.
+- **`AnalyticsPage.tsx`**: Removed fake `monthlyVolume` array. Wired to live appointments trend, treatments breakdown, and dentist slot utilization.
+- **`TeamPage.tsx`**: Removed hardcoded staff list. Wired to `useTeamUsers()` calling `GET /users`.
+- **`SettingsPage.tsx`**: Removed component-only state. Wired to `useClinicProfile()` and `useUpdateClinicProfile()` calling `GET/PATCH /clinic`.
+- **`AppLayout.tsx`**: Removed hardcoded notification dropdown items (`Priya Sharma...`). Wired to live `useStaffNotifications()` polling every 30s with emergency alert badge and one-click acknowledge action.
+- **Environment**: Set `VITE_USE_MOCK_API=false` in `.env` and `.env.development` so all queries and mutations execute against the live backend API server.
+
+### 6.3 Verification Summary
+- **Client Build**: `npm run build` exits with code 0 (2,730 modules transformed, 0 TypeScript errors).
+- **Server Typecheck**: `npx tsc --noEmit` exits with code 0 (all routes and controllers strictly type-safe).
+- **Backend Endpoints**: All endpoints scoped by server-authenticated `req.clinicId` with zero cross-tenant leakage.
+

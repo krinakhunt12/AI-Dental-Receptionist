@@ -53,6 +53,18 @@ export async function updateNotificationConsent(
   return res?.data ?? res;
 }
 
+export async function getReminderJobs(
+  clinicId: string,
+  filters?: { status?: string; page?: number; limit?: number }
+): Promise<{ jobs: ReminderJob[]; total: number; page: number; limit: number }> {
+  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
+    await delay(250);
+    return mockDb.getReminderJobs(clinicId, filters);
+  }
+  const res = await apiClient.get<any>('/api/reminder-jobs', { params: filters });
+  return res?.data ?? res;
+}
+
 export async function sendTriageMessage(data: {
   patientId?: string;
   appointmentId?: string;

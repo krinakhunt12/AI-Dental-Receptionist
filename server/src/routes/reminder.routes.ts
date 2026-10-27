@@ -8,6 +8,8 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get('/', ReminderController.listJobs);
+
 router.post(
   '/:id/retry',
   logAudit('REMINDER_JOB_RETRY', 'ReminderJob'),

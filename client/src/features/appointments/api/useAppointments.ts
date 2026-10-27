@@ -50,6 +50,7 @@ export function useCreateAppointment() {
     onSuccess: (newAppt) => {
       if (clinicId) {
         queryClient.invalidateQueries({ queryKey: [clinicId, 'appointments'] });
+        queryClient.invalidateQueries({ queryKey: [clinicId, 'dashboard', 'summary'] });
         queryClient.invalidateQueries({
           queryKey: queryKeys.slots(clinicId, newAppt.doctorId, newAppt.date),
         });
@@ -84,6 +85,7 @@ export function useUpdateAppointment() {
     onSuccess: (updatedAppt, variables) => {
       if (clinicId) {
         queryClient.invalidateQueries({ queryKey: [clinicId, 'appointments'] });
+        queryClient.invalidateQueries({ queryKey: [clinicId, 'dashboard', 'summary'] });
         queryClient.invalidateQueries({ queryKey: queryKeys.appointment(clinicId, variables.id) });
         if (updatedAppt.doctorId && updatedAppt.date) {
           queryClient.invalidateQueries({
@@ -159,6 +161,7 @@ export function useCancelAppointment() {
       // Invalidate queries to sync with source of truth
       if (clinicId) {
         queryClient.invalidateQueries({ queryKey: [clinicId, 'appointments'] });
+        queryClient.invalidateQueries({ queryKey: [clinicId, 'dashboard', 'summary'] });
         queryClient.invalidateQueries({ queryKey: queryKeys.appointment(clinicId, id) });
 
         const doctorId = data?.doctorId || context?.previousAppointment?.doctorId;
