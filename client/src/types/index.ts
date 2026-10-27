@@ -240,3 +240,78 @@ export interface TriageMessageResponse {
   patientId: string | null;
 }
 
+export type Doctor = Dentist;
+
+export interface Message {
+  id: string;
+  conversationId?: string;
+  senderRole?: 'user' | 'assistant' | 'system' | 'staff' | string;
+  sender?: 'ai' | 'patient' | 'staff';
+  content?: string;
+  text?: string;
+  createdAt?: string;
+  timestamp?: string;
+  tokensUsed?: number;
+  confidenceScore?: number;
+}
+
+export interface Conversation {
+  id: string;
+  clinicId?: string;
+  patientId?: string | null;
+  patientName: string;
+  patientPhone: string;
+  patientAvatar?: string;
+  channel: 'Widget' | 'WhatsApp' | 'Phone' | 'chat' | string;
+  status: 'AI Handled' | 'Needs Human' | 'Emergency' | 'Booked' | 'ACTIVE' | 'RESOLVED' | string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  unread?: boolean;
+  emergency?: boolean;
+  messages?: Message[];
+  tags?: string[];
+  internalNotes?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  patient?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+  } | null;
+}
+
+export interface Invoice {
+  id: string;
+  clinicId?: string;
+  subscriptionId?: string;
+  number?: string;
+  date?: string;
+  amount: number;
+  currency?: string;
+  status: 'Paid' | 'Pending' | 'Failed' | 'paid' | 'open' | 'void' | 'uncollectible' | string;
+  paymentGateway?: string;
+  paidAt?: string | null;
+  pdfUrl?: string;
+  planName?: string;
+  createdAt?: string;
+}
+
+export interface KnowledgeDoc {
+  id: string;
+  name: string;
+  chars: number;
+  chunks: number;
+  addedAt: string;
+}
+
+export interface KnowledgeGap {
+  id: string;
+  question: string;
+  frequency: number;
+  lastAsked: string;
+  suggestedAnswer?: string;
+  status: 'Open' | 'Resolved';
+}
+
+

@@ -2,13 +2,13 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { SiteLayout } from './components/layout/SiteLayout';
 
-const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
-const ServicesPage = lazy(() => import('./pages/ServicesPage').then((m) => ({ default: m.ServicesPage })));
-const DentistsPage = lazy(() => import('./pages/DentistsPage').then((m) => ({ default: m.DentistsPage })));
-const BookPage = lazy(() => import('./pages/BookPage').then((m) => ({ default: m.BookPage })));
-const ContactPage = lazy(() => import('./pages/ContactPage').then((m) => ({ default: m.ContactPage })));
-const ChatPage = lazy(() => import('./pages/ChatPage').then((m) => ({ default: m.ChatPage })));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
+const HomePage = lazy(() => import('./pages/home/HomePage').then((m) => ({ default: m.HomePage })));
+const ServicesPage = lazy(() => import('./pages/services/ServicesPage').then((m) => ({ default: m.ServicesPage })));
+const DentistsPage = lazy(() => import('./pages/dentists/DentistsPage').then((m) => ({ default: m.DentistsPage })));
+const BookPage = lazy(() => import('./pages/book/BookPage').then((m) => ({ default: m.BookPage })));
+const ContactPage = lazy(() => import('./pages/contact/ContactPage').then((m) => ({ default: m.ContactPage })));
+const ChatPage = lazy(() => import('./pages/chat/ChatPage').then((m) => ({ default: m.ChatPage })));
+const NotFoundPage = lazy(() => import('./pages/errors/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense

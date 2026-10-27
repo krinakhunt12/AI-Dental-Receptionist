@@ -16,27 +16,35 @@ export const LoginPage: React.FC = () => {
   const { addToast } = useUIStore();
 
   const [email, setEmail] = useState('krina@smilecare.ai');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('Password123!');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    await login(email, 'OWNER');
-    setIsLoading(false);
-    addToast({ type: 'success', title: 'Welcome back!', message: 'Signed in successfully.' });
-    navigate(next);
+    try {
+      await login(email, password);
+      setIsLoading(false);
+      addToast({ type: 'success', title: 'Welcome back!', message: 'Signed in successfully.' });
+      navigate(next);
+    } catch (err: any) {
+      setIsLoading(false);
+      addToast({ type: 'error', title: 'Sign in failed', message: err.message || 'Invalid credentials' });
+    }
   };
 
   const handleRoleQuickLogin = async (role: UserRole, demoEmail: string) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    await login(demoEmail, role);
-    setIsLoading(false);
-    addToast({ type: 'info', title: `Logged in as ${role}`, message: `Testing role permissions for ${role}.` });
-    if (role === 'SUPER_ADMIN') navigate('/admin');
-    else navigate('/app');
+    try {
+      await login(demoEmail, 'Password123!', role);
+      setIsLoading(false);
+      addToast({ type: 'info', title: `Logged in as ${role}`, message: `Testing role permissions for ${role}.` });
+      if (role === 'SUPER_ADMIN') navigate('/admin');
+      else navigate('/app');
+    } catch (err: any) {
+      setIsLoading(false);
+      addToast({ type: 'error', title: 'Sign in failed', message: err.message || 'Quick login failed' });
+    }
   };
 
   return (
@@ -87,38 +95,38 @@ export const LoginPage: React.FC = () => {
           </Button>
         </form>
 
-        {/* DEMO FAST ROLE SWITCHING SHORTCUTS */}
+        {/* FAST ROLE SWITCHING SHORTCUTS */}
         <div className="pt-4 border-t border-slate-800 space-y-2">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block text-center">
-            ⚡ Quick Demo Logins (Click to Test):
+            ⚡ Quick Clinic Logins (Seeded Accounts):
           </span>
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => handleRoleQuickLogin('OWNER', 'krina@smilecare.ai')}
               className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-teal-300 text-left cursor-pointer transition-colors"
             >
-              👑 Owner (Krina)
+              👑 Owner (Dr. Krina)
             </button>
             <button
-              onClick={() => handleRoleQuickLogin('ADMIN', 'admin@smilecare.ai')}
+              onClick={() => handleRoleQuickLogin('ADMIN', 'admin@smilecaredowntown.com')}
               className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-sky-300 text-left cursor-pointer transition-colors"
             >
               💼 Clinic Admin
             </button>
             <button
-              onClick={() => handleRoleQuickLogin('RECEPTIONIST', 'reception@smilecare.ai')}
+              onClick={() => handleRoleQuickLogin('RECEPTIONIST', 'staff@smilecaredowntown.com')}
               className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-300 text-left cursor-pointer transition-colors"
             >
-              📞 Receptionist
+              📞 Staff
             </button>
             <button
-              onClick={() => handleRoleQuickLogin('DENTIST', 'dentist@smilecare.ai')}
+              onClick={() => handleRoleQuickLogin('DENTIST', 'doctor@smilecaredowntown.com')}
               className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-purple-300 text-left cursor-pointer transition-colors"
             >
-              🦷 Dentist
+              🦷 Dentist (Dr. Vance)
             </button>
             <button
-              onClick={() => handleRoleQuickLogin('SUPER_ADMIN', 'platform@smilecare.ai')}
+              onClick={() => handleRoleQuickLogin('SUPER_ADMIN', 'superadmin@smilecare.com')}
               className="col-span-2 px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/60 border border-rose-800/60 text-xs font-semibold text-rose-300 text-center cursor-pointer transition-colors"
             >
               🚀 Super Admin Platform

@@ -68,4 +68,14 @@ export class DashboardController {
       next(error);
     }
   }
+
+  static async getStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.clinicId) throw ApiError.unauthorized('Clinic context missing');
+      const stats = await DashboardService.getStats(req.clinicId);
+      res.status(200).json(stats);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

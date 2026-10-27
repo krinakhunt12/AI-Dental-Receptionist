@@ -1,5 +1,4 @@
 import { apiClient } from '../../../lib/apiClient';
-import { mockDb } from '../../../mocks/mockDb';
 
 export interface StaffNotificationItem {
   id: string;
@@ -17,22 +16,18 @@ export async function getStaffNotifications(
   clinicId: string,
   unreadOnly?: boolean
 ): Promise<StaffNotificationItem[]> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    return mockDb.getStaffNotifications(clinicId, unreadOnly);
-  }
-  const res = await apiClient.get<any>('/api/notifications/staff', {
+  const res = await apiClient<any>('/notifications/staff', {
     params: { unreadOnly: unreadOnly ? 'true' : 'false' },
   });
-  return res?.data ?? res;
+  return res?.data ?? res ?? [];
 }
 
 export async function acknowledgeStaffNotification(
   clinicId: string,
   id: string
 ): Promise<StaffNotificationItem> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    return mockDb.acknowledgeStaffNotification(clinicId, id);
-  }
-  const res = await apiClient.patch<any>(`/api/notifications/staff/${id}/acknowledge`);
+  const res = await apiClient<any>(`/notifications/staff/${id}/acknowledge`, {
+    method: 'PATCH',
+  });
   return res?.data ?? res;
 }

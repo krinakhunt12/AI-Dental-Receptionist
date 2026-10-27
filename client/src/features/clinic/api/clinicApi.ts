@@ -1,9 +1,9 @@
 import { apiClient } from '../../../lib/apiClient';
-import { mockDb } from '../../../mocks/mockDb';
 
 export interface ClinicProfile {
   id: string;
   name: string;
+  slug?: string;
   subdomain?: string;
   phone?: string;
   emergencyPhone?: string;
@@ -14,20 +14,17 @@ export interface ClinicProfile {
 }
 
 export async function getClinicProfile(clinicId: string): Promise<ClinicProfile> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    return mockDb.getClinicProfile(clinicId);
-  }
-  const res = await apiClient.get<any>('/api/clinic');
-  return res?.data ?? res;
+  const res = await apiClient<{ success?: boolean; data?: any } | any>('/clinic/me');
+  return (res as any)?.data ?? res;
 }
 
 export async function updateClinicProfile(
   clinicId: string,
   data: Partial<ClinicProfile>
 ): Promise<ClinicProfile> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    return mockDb.updateClinicProfile(clinicId, data);
-  }
-  const res = await apiClient.patch<any>('/api/clinic', data);
-  return res?.data ?? res;
+  const res = await apiClient<{ success?: boolean; data?: any } | any>('/clinic/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  return (res as any)?.data ?? res;
 }

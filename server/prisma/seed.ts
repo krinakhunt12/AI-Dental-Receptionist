@@ -124,6 +124,7 @@ async function main() {
 
   // Users for Clinic 1
   const user1Admin = await seedClinicUser(clinic1.id, 'admin@smilecaredowntown.com', 'Sarah', 'Jenkins', Role.CLINIC_ADMIN);
+  const user1Krina = await seedClinicUser(clinic1.id, 'krina@smilecare.ai', 'Dr. Krina', 'Khunt', Role.CLINIC_ADMIN);
   const user1Doctor = await seedClinicUser(clinic1.id, 'doctor@smilecaredowntown.com', 'Michael', 'Vance', Role.DOCTOR);
   const user1Staff = await seedClinicUser(clinic1.id, 'staff@smilecaredowntown.com', 'Emily', 'Davis', Role.STAFF);
 

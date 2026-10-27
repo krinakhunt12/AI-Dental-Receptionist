@@ -52,6 +52,7 @@ export class AiService {
         take: limit,
         include: {
           patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
+          messages: { orderBy: { createdAt: 'desc' }, take: 1 },
           _count: { select: { messages: true } },
         },
         orderBy: { updatedAt: 'desc' },

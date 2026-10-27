@@ -47,36 +47,45 @@ export default function HomePage() {
   const [inputMsg, setInputMsg] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleDemoSend = (text: string) => {
+  const handleDemoSend = async (text: string) => {
     const userMessage = text || inputMsg;
     if (!userMessage.trim()) return;
 
-    setDemoMessages((prev) => [
-      ...prev,
+    const newMsgs = [
+      ...demoMessages,
       { sender: 'user', text: userMessage, time: 'Just now' },
-    ]);
+    ];
+    setDemoMessages(newMsgs);
     setInputMsg('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let aiResponse = 'I can help schedule your teeth cleaning or checkup with Dr. Krina Khunt! Would you prefer Friday afternoon or Saturday morning?';
-
-      const lower = userMessage.toLowerCase();
-      if (lower.includes('price') || lower.includes('cost') || lower.includes('cleaning')) {
-        aiResponse = 'Our standard Dental Hygiene & Scaling is ₹1,500. Dental Implants start from ₹25,000. Would you like to view our full treatment price list or book a consultation?';
-      } else if (lower.includes('emergency') || lower.includes('pain') || lower.includes('bleeding')) {
-        aiResponse = '🚨 EMERGENCY NOTICE: For severe dental trauma or uncontrollable bleeding, please call our emergency line (+91 98765 00000) or visit the nearest emergency room immediately!';
-      } else if (lower.includes('doctor') || lower.includes('dentist')) {
-        aiResponse = 'Our roster includes Dr. Krina Khunt (Implantologist), Dr. Rajesh Mehta (Orthodontist), and Dr. Priya Verma (Pediatric Dentist). Who would you like to see?';
-      }
-
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMsgs.map((m) => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text,
+          })),
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || 'I can help schedule your teeth cleaning or checkup with Dr. Krina Khunt! Would you prefer Friday afternoon or Saturday morning?';
       setDemoMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: aiResponse, time: 'Just now' },
+        { sender: 'ai', text: reply, time: 'Just now' },
       ]);
+    } catch {
+      setDemoMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: 'I can help schedule your teeth cleaning or checkup with Dr. Krina Khunt! Would you prefer Friday afternoon or Saturday morning?', time: 'Just now' },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 900);
+    }
   };
+
 
   const BENTO_FEATURES = [
     {

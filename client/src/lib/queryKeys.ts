@@ -44,4 +44,17 @@ export const queryKeys = {
     [clinicId, 'clinic', 'profile'] as const,
   teamUsers: (clinicId: string) =>
     [clinicId, 'team', 'users'] as const,
+  conversations: (clinicId: string, filters?: { patientId?: string; page?: number; limit?: number }) =>
+    [clinicId, 'conversations', filters ?? {}] as const,
+  conversation: (clinicId: string, id: string) =>
+    [clinicId, 'conversations', id] as const,
+  invoices: (clinicId: string) =>
+    [clinicId, 'invoices'] as const,
+  subscription: (clinicId: string) =>
+    [clinicId, 'subscription'] as const,
+  knowledgeDocs: (clinicId: string) =>
+    [clinicId, 'knowledge', 'docs'] as const,
+  knowledgeSearch: (clinicId: string, query: string) =>
+    [clinicId, 'knowledge', 'search', query] as const,
 };
+

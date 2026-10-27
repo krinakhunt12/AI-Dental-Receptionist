@@ -1,13 +1,18 @@
 import { Treatment } from '../../../types';
 import { apiClient } from '../../../lib/apiClient';
-import { mockDb } from '../../../mocks/mockDb';
-
-const delay = (ms: number = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function getTreatments(clinicId: string): Promise<Treatment[]> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    await delay(300);
-    return mockDb.getTreatments(clinicId);
-  }
-  return apiClient.get<Treatment[]>(`/api/clinics/${clinicId}/treatments`);
+  const res = await apiClient<{ success?: boolean; data?: any[] } | any[]>('/treatments');
+  const rawList = Array.isArray(res)
+    ? res
+    : (Array.isArray((res as any)?.data) ? (res as any).data : []);
+
+  return rawList.map((t: any) => ({
+    id: t.id,
+    clinicId: t.clinicId,
+    name: t.name,
+    duration: t.durationMins || t.duration || 45,
+    price: Number(t.price) || 0,
+    description: t.description || '',
+  }));
 }

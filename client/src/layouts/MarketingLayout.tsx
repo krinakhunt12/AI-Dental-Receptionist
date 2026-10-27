@@ -127,7 +127,7 @@ export const MarketingLayout: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-slate-500 text-[11px]">
           <p>© 2026 SmileCare AI Platform, Inc. All rights reserved.</p>
-          <p>Built with React 18, TypeScript, Tailwind CSS, TanStack Query & MSW.</p>
+          <p>Built with React 18, TypeScript, Tailwind CSS, TanStack Query & PostgreSQL.</p>
         </div>
       </footer>
     </div>

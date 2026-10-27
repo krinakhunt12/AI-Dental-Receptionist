@@ -387,7 +387,7 @@ export const RegisterWizardPage: React.FC = () => {
           </div>
         )}
 
-        {/* STEP 4: TRIAL OR PAYMENT MOCK */}
+        {/* STEP 4: TRIAL OR PAYMENT CHECKOUT */}
         {currentStep === 4 && (
           <div className="space-y-6 animate-fade-in">
             <div className="border-b border-slate-800 pb-4">
@@ -421,7 +421,7 @@ export const RegisterWizardPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Option 2: Mock Instant Payment */}
+              {/* Option 2: Instant Card Checkout */}
               <div
                 onClick={() => handleChange('paymentOption', 'CARD')}
                 className={`p-6 rounded-2xl border cursor-pointer transition-all ${formData.paymentOption === 'CARD'
@@ -431,7 +431,7 @@ export const RegisterWizardPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-3">
                   <Badge variant="purple" icon={<ShieldCheck className="w-3.5 h-3.5" />}>
-                    STRIPE / RAZORPAY MOCK
+                    CARD PAYMENT GATEWAY
                   </Badge>
                   {formData.paymentOption === 'CARD' && <CheckCircle2 className="w-5 h-5 text-teal-400" />}
                 </div>

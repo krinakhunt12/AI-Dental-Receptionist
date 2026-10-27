@@ -1,5 +1,4 @@
 import { apiClient } from '../../../lib/apiClient';
-import { mockDb } from '../../../mocks/mockDb';
 
 export interface TriageLogItem {
   id: string;
@@ -16,9 +15,12 @@ export async function getTriageLogs(
   clinicId: string,
   filters?: { urgency?: string; page?: number; limit?: number }
 ): Promise<{ logs: TriageLogItem[]; total: number; page: number; limit: number }> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    return mockDb.getTriageLogs(clinicId, filters);
-  }
-  const res = await apiClient.get<any>('/api/triage/logs', { params: filters });
-  return res?.data ?? res;
+  const res = await apiClient<any>('/triage/logs', { params: filters });
+  const data = res?.data ?? res;
+  return {
+    logs: data?.logs || [],
+    total: data?.total || 0,
+    page: data?.page || 1,
+    limit: data?.limit || 20,
+  };
 }

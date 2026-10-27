@@ -18,24 +18,37 @@ export const HomePage: React.FC = () => {
   ]);
   const [userQuery, setUserQuery] = useState('');
 
-  const handleSendQuery = (textToSend?: string) => {
+  const handleSendQuery = async (textToSend?: string) => {
     const q = textToSend || userQuery;
     if (!q.trim()) return;
 
-    const newMsgs = [...chatMessages, { sender: 'user', text: q }];
+    const newMsgs = [...chatMessages, { sender: 'user', text: q.trim() }];
     setChatMessages(newMsgs);
     setUserQuery('');
 
-    setTimeout(() => {
-      let reply = "I can certainly help you book an appointment for that! Dr. Krina Mehta has openings this Thursday at 10:00 AM or 2:30 PM. Shall I reserve Thursday 10:00 AM for you?";
-      if (q.toLowerCase().includes('price') || q.toLowerCase().includes('cost')) {
-        reply = "Our routine dental checkup & cleaning is $120. Invisalign assessments start at $100. We also accept PPO dental insurances! Would you like to schedule a visit?";
-      } else if (q.toLowerCase().includes('pain') || q.toLowerCase().includes('emergency')) {
-        reply = "⚠️ Pain detected! I am escalating your request immediately to our on-call dental team. Please provide your phone number so Dr. Mehta's office can call you directly.";
-      }
-
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMsgs.map((m) => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text,
+          })),
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || "I can certainly help you book an appointment! Dr. Michael Vance has openings this Thursday. Shall I check available slots for you?";
       setChatMessages((prev) => [...prev, { sender: 'ai', text: reply }]);
-    }, 600);
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: "I can certainly help you book an appointment! We have openings this week. Shall I check available slots for you?",
+        },
+      ]);
+    }
   };
 
   return (

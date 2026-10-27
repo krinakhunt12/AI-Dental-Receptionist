@@ -1,38 +1,63 @@
 import React, { useState } from 'react';
-import { useKnowledgeGapsQuery } from '../../api/mockClient';
+import {
+  useKnowledgeDocs,
+  useAddKnowledgeDoc,
+  useDeleteKnowledgeDoc,
+  useSearchKnowledge,
+} from '../../features/knowledge/hooks/useKnowledge';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
+import { CardSkeleton } from '../../components/ui/Skeleton';
 import { useUIStore } from '../../store/useUIStore';
-import { Brain, Upload, Plus, FileText, CheckCircle2, AlertTriangle, Sparkles, Send } from 'lucide-react';
+import { Brain, Upload, Plus, FileText, CheckCircle2, Trash2, Sparkles, Send } from 'lucide-react';
 
 export const KnowledgeBasePage: React.FC = () => {
-  const { data: gaps = [] } = useKnowledgeGapsQuery();
+  const { data: docs = [], isLoading, isError, refetch } = useKnowledgeDocs();
+  const addDocMut = useAddKnowledgeDoc();
+  const deleteDocMut = useDeleteKnowledgeDoc();
   const { addToast } = useUIStore();
 
   const [testQuestion, setTestQuestion] = useState('');
-  const [testAnswer, setTestAnswer] = useState<string | null>(null);
-
-  const [faqs, setFaqs] = useState([
-    { q: 'What insurance do you accept?', a: 'We accept Delta Dental, MetLife, Cigna, Guardian, and Aetna PPO plans.' },
-    { q: 'Is emergency root canal covered?', a: 'Yes, emergency root canals are covered up to 80% under standard PPO insurance.' },
-  ]);
+  const [activeSearch, setActiveSearch] = useState('');
+  const { data: searchResults = [], isLoading: isSearching } = useSearchKnowledge(activeSearch);
 
   const [newQ, setNewQ] = useState('');
   const [newA, setNewA] = useState('');
 
-  const handleAddFaq = (e: React.FormEvent) => {
+  const handleAddFaq = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newQ || !newA) return;
-    setFaqs([...faqs, { q: newQ, a: newA }]);
-    setNewQ('');
-    setNewA('');
-    addToast({ type: 'success', title: 'FAQ Added!', message: 'AI Knowledge Base updated.' });
+    if (!newQ.trim() || !newA.trim()) return;
+    try {
+      await addDocMut.mutateAsync({
+        name: `FAQ: ${newQ.slice(0, 35)}...`,
+        question: newQ,
+        answer: newA,
+        text: `Question: ${newQ}\nAnswer: ${newA}`,
+      });
+      setNewQ('');
+      setNewA('');
+      addToast({ type: 'success', title: 'FAQ Added!', message: 'AI Knowledge Base updated and indexed.' });
+    } catch {
+      addToast({ type: 'error', title: 'Error adding FAQ', message: 'Could not update knowledge base.' });
+    }
   };
 
-  const handleTestSubmit = () => {
+  const handleTestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!testQuestion.trim()) return;
-    setTestAnswer(`Based on your uploaded Fee Guide, ${testQuestion} is answered automatically using 98% AI confidence.`);
+    setActiveSearch(testQuestion.trim());
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDocMut.mutateAsync(id);
+      addToast({ type: 'info', title: 'Document removed', message: 'Indexed passages updated.' });
+    } catch {
+      addToast({ type: 'error', title: 'Error deleting', message: 'Failed to delete knowledge document.' });
+    }
   };
 
   return (
@@ -44,133 +69,158 @@ export const KnowledgeBasePage: React.FC = () => {
             Train Your Dental AI Knowledge Base
           </h1>
           <p className="text-xs text-slate-500">
-            Upload PDFs, add custom FAQ pairs, and resolve AI knowledge gaps.
+            Manage clinic knowledge documents, add custom FAQ pairs, and test semantic retrieval against live RAG.
           </p>
         </div>
 
         <Badge variant="teal" icon={<CheckCircle2 className="w-4 h-4" />}>
-          AI Model Synced (14 Documents)
+          RAG Vector Index Synced ({docs.length} Documents)
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Uploads & FAQ Pairs */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* File Upload Box */}
-          <div className="p-8 bg-white rounded-2xl border-2 border-dashed border-teal-300 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto">
-              <Upload className="w-6 h-6" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900">Upload PDF / Fee Guides</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Drag & drop clinic fee schedules, insurance matrices, or consent forms (Max 25MB per document).
-            </p>
-            <Button size="sm" onClick={() => addToast({ type: 'success', title: 'File Uploaded!', message: 'AI training initiated.' })}>
-              Select File to Upload
-            </Button>
-          </div>
-
-          {/* Add FAQ Form */}
-          <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">Add Custom Question & Answer Pair</h3>
-            <form onSubmit={handleAddFaq} className="space-y-3">
-              <Input
-                label="Question"
-                placeholder="e.g. Do you offer teeth whitening touching up?"
-                value={newQ}
-                onChange={(e) => setNewQ(e.target.value)}
-              />
-              <textarea
-                placeholder="Answer text..."
-                value={newA}
-                onChange={(e) => setNewA(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-500"
-                rows={3}
-              />
-              <Button type="submit" size="sm" icon={Plus}>
-                Train AI on Question
-              </Button>
-            </form>
-          </div>
-
-          {/* Existing Trained FAQs */}
-          <div className="p-6 bg-white rounded-2xl border border-slate-200 h-[380px] flex flex-col">
-            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 shrink-0">Trained FAQ Library</h3>
-            <div className="flex-1 overflow-y-auto pr-1 space-y-3 mt-3">
-              {faqs.map((f, i) => (
-                <div key={i} className="p-3 bg-slate-50 rounded-xl space-y-1 text-xs">
-                  <div className="font-bold text-slate-900">Q: {f.q}</div>
-                  <div className="text-slate-600">A: {f.a}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
+      )}
 
-        {/* Right Column: AI Gaps & Test Sandbox */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Test Sandbox Box */}
-          <div className="p-6 bg-slate-900 text-white rounded-2xl space-y-4 border border-teal-500/30">
-            <h3 className="text-sm font-bold flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-teal-400" />
-              Test This Knowledge Base
-            </h3>
-            <p className="text-xs text-slate-300">
-              Type a hypothetical question to test if your AI answers correctly based on your knowledge base.
-            </p>
+      {isError && (
+        <ErrorState
+          title="Failed to load knowledge base"
+          message="Could not connect to the clinic knowledge repository."
+          onRetry={() => refetch()}
+        />
+      )}
 
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={testQuestion}
-                onChange={(e) => setTestQuestion(e.target.value)}
-                placeholder="Ask a test question..."
-                className="w-full text-xs p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none"
-              />
-              <Button size="sm" onClick={handleTestSubmit} className="w-full justify-center">
-                Simulate Answer
-              </Button>
+      {!isLoading && !isError && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column: Uploads & FAQ Pairs */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Add FAQ Form */}
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4 shadow-xs">
+              <h3 className="text-sm font-bold text-slate-900">Add Custom Question & Answer Pair</h3>
+              <form onSubmit={handleAddFaq} className="space-y-3">
+                <Input
+                  label="Patient Question"
+                  placeholder="e.g. Do you accept Delta Dental insurance?"
+                  value={newQ}
+                  onChange={(e) => setNewQ(e.target.value)}
+                  required
+                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Verified Clinic Answer
+                  </label>
+                  <textarea
+                    placeholder="e.g. Yes, we accept Delta Dental PPO, MetLife, and Cigna. Co-pay is determined after checking your policy."
+                    value={newA}
+                    onChange={(e) => setNewA(e.target.value)}
+                    className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-500"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <Button type="submit" size="sm" icon={Plus} isLoading={addDocMut.isPending}>
+                  Train AI on Question
+                </Button>
+              </form>
             </div>
 
-            {testAnswer && (
-              <div className="p-3 rounded-xl bg-teal-950/60 border border-teal-800 text-xs text-teal-200 animate-fade-in">
-                {testAnswer}
+            {/* Existing Trained Documents & FAQs */}
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 h-[420px] flex flex-col shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Trained Documents & FAQ Library ({docs.length})
+                </h3>
               </div>
-            )}
+
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3 mt-3">
+                {docs.length === 0 ? (
+                  <EmptyState
+                    icon={FileText}
+                    title="No knowledge documents yet"
+                    description="Add FAQ pairs or clinical policies above to train your AI receptionist."
+                  />
+                ) : (
+                  docs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-100 flex items-start justify-between gap-3"
+                    >
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-teal-600 shrink-0" />
+                          <h4 className="text-xs font-bold text-slate-900 truncate">{doc.name}</h4>
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          {doc.chars} characters • {doc.chunks} semantic chunk{doc.chunks !== 1 ? 's' : ''} • Added {new Date(doc.addedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
+                        title="Delete Document"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* AI Unanswered Gaps */}
-          <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-3">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              Unanswered Gaps List
-            </h3>
-            <p className="text-xs text-slate-500">
-              Questions patients asked that the AI couldn't answer yet.
-            </p>
+          {/* Right Column: AI Test Sandbox */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="p-6 bg-white rounded-2xl border border-slate-200 space-y-4 shadow-xs h-[560px] flex flex-col">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-teal-600" />
+                <h3 className="text-sm font-bold text-slate-900">RAG Semantic Search Test</h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                Ask a test question to verify what facts the AI receptionist retrieves from your indexed knowledge base.
+              </p>
 
-            <div className="space-y-2">
-              {gaps.map((g, idx) => (
-                <div key={idx} className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
-                  <div className="text-xs font-bold text-amber-900">{g.question}</div>
-                  <div className="text-[10px] text-amber-700 flex justify-between">
-                    <span>Asked {g.count} times</span>
-                    <button
-                      onClick={() => {
-                        setNewQ(g.question);
-                        addToast({ type: 'info', title: 'Question copied to editor above' });
-                      }}
-                      className="font-bold underline cursor-pointer"
-                    >
-                      Add Answer →
-                    </button>
-                  </div>
+              <form onSubmit={handleTestSubmit} className="space-y-3">
+                <Input
+                  placeholder="e.g. Does insurance cover root canals?"
+                  value={testQuestion}
+                  onChange={(e) => setTestQuestion(e.target.value)}
+                />
+                <Button type="submit" size="sm" icon={Send} className="w-full justify-center" isLoading={isSearching}>
+                  Test Retrieval
+                </Button>
+              </form>
+
+              {activeSearch && (
+                <div className="flex-1 overflow-y-auto mt-2 space-y-2 border-t border-slate-100 pt-3">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Retrieved Knowledge Passages ({searchResults.length}):
+                  </span>
+                  {searchResults.length === 0 ? (
+                    <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-500 italic">
+                      No matching passages found for "{activeSearch}". Try adding an FAQ or policy covering this topic.
+                    </div>
+                  ) : (
+                    searchResults.map((hit, idx) => (
+                      <div key={idx} className="p-3 bg-teal-50/50 rounded-xl border border-teal-100 text-xs space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-teal-700">
+                          <span className="truncate max-w-[180px]">{hit.source}</span>
+                          <span>Score: {Math.round(hit.score * 100)}%</span>
+                        </div>
+                        <p className="text-slate-700 leading-relaxed text-[11px]">{hit.text}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

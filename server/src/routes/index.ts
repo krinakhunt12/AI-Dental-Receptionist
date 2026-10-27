@@ -14,7 +14,10 @@ import triageRoutes from './triage.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import notificationRoutes from './notification.routes.js';
 import treatmentRoutes from './treatment.routes.js';
+import knowledgeRoutes from './knowledge.routes.js';
 import { AppointmentController } from '../controllers/appointment.controller.js';
+import { DashboardController } from '../controllers/dashboard.controller.js';
+import { chat } from '../agent.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
 import { tenantScope } from '../middlewares/tenant.middleware.js';
 
@@ -39,5 +42,21 @@ router.use('/care-protocols', careProtocolRoutes);
 router.use('/reminder-jobs', reminderRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/triage', triageRoutes);
+router.use('/knowledge', knowledgeRoutes);
+
+// Public / Clinic AI chat agent endpoint
+router.post('/chat', async (req, res, next) => {
+  try {
+    const { messages } = req.body;
+    const result = await chat(messages || []);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Clinic stats endpoint
+router.get('/stats', authenticate, tenantScope, DashboardController.getStats);
 
 export default router;
+

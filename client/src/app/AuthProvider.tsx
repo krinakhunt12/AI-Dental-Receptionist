@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole } from '../config/permissions';
 import { queryClient } from '../lib/queryClient';
+import { apiClient } from '../lib/apiClient';
 
 export interface User {
   id: string;
@@ -16,7 +17,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isHydrated: boolean;
   token: string | null;
-  login: (email: string, role?: UserRole) => Promise<void>;
+  login: (email: string, passwordOrRole?: string | UserRole, maybeRole?: UserRole) => Promise<void>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
   updateUser: (fields: Partial<User>) => void;
@@ -24,15 +25,6 @@ export interface AuthContextType {
 
 export const AUTH_STORAGE_KEY = 'smilecare_auth_user';
 export const TOKEN_STORAGE_KEY = 'smilecare_auth_token';
-
-export const DEMO_USER: User = {
-  id: 'usr_mehta_101',
-  name: 'Dr. Krina Mehta',
-  email: 'krina@smilecare.ai',
-  role: 'OWNER',
-  clinicId: 'clinic_smilecare_01',
-  avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80',
-};
 
 /**
  * Validates the shape of a user object.
@@ -86,17 +78,23 @@ export function readStoredUser(): User | null {
 }
 
 /**
- * Resolves initial user based on stored data or VITE_DEMO_MODE environment flag.
+ * Safely reads stored token from localStorage.
+ */
+export function readStoredToken(): string | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return localStorage.getItem(TOKEN_STORAGE_KEY) || localStorage.getItem('smilecare_token') || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolves initial user based solely on stored session.
+ * If no valid stored session exists, returns null.
  */
 export function getInitialUser(): User | null {
-  const stored = readStoredUser();
-  if (stored) return stored;
-
-  if (import.meta.env?.VITE_DEMO_MODE === 'true') {
-    return DEMO_USER;
-  }
-
-  return null;
+  return readStoredUser();
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,13 +104,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   const [token, setToken] = useState<string | null>(() => {
-    try {
-      const initial = getInitialUser();
-      if (!initial) return null;
-      return localStorage.getItem(TOKEN_STORAGE_KEY) || 'demo_jwt_token_smilecare';
-    } catch {
-      return null;
-    }
+    const initial = getInitialUser();
+    if (!initial) return null;
+    return readStoredToken();
   });
 
   // Mark hydrated on client mount
@@ -138,8 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (token) {
         localStorage.setItem(TOKEN_STORAGE_KEY, token);
+        localStorage.setItem('smilecare_token', token);
       } else {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem('smilecare_token');
       }
     } catch (err) {
       console.error('Failed to write smilecare_auth_token to localStorage', err);
@@ -183,18 +179,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, role: UserRole = 'OWNER') => {
+  const login = async (email: string, passwordOrRole?: string | UserRole, maybeRole?: UserRole) => {
     queryClient.clear();
-    const newUser: User = {
-      id: `usr_${Math.random().toString(36).substring(2, 7)}`,
-      name: email.split('@')[0].replace('.', ' ').toUpperCase(),
-      email,
-      role,
-      clinicId: role === 'SUPER_ADMIN' ? 'platform_admin' : 'clinic_smilecare_01',
-      avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80',
-    };
-    setUser(newUser);
-    setToken(`jwt_${Date.now()}`);
+    const isRoleParam = typeof passwordOrRole === 'string' && ['SUPER_ADMIN', 'OWNER', 'DENTIST', 'RECEPTIONIST', 'ADMIN'].includes(passwordOrRole);
+    const password = !isRoleParam && typeof passwordOrRole === 'string' ? passwordOrRole : 'Password123!';
+    const roleFallback: UserRole = isRoleParam ? (passwordOrRole as UserRole) : (maybeRole || 'OWNER');
+
+    const res = await apiClient<{ success: boolean; data: { user: any; accessToken: string } }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (res?.data?.user && res?.data?.accessToken) {
+      const u = res.data.user;
+      const roleMap: Record<string, UserRole> = {
+        SUPER_ADMIN: 'SUPER_ADMIN',
+        CLINIC_ADMIN: 'OWNER',
+        DOCTOR: 'DENTIST',
+        STAFF: 'RECEPTIONIST',
+      };
+      const mappedRole: UserRole = roleMap[u.role] || roleFallback;
+      const newUser: User = {
+        id: u.id,
+        name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || email.split('@')[0],
+        email: u.email,
+        role: mappedRole,
+        clinicId: u.clinicId || (u.role === 'SUPER_ADMIN' ? 'platform_admin' : '94e2df72-8a90-4c8f-b97b-d459f6cfc972'),
+        avatarUrl: u.avatarUrl || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80',
+      };
+      setUser(newUser);
+      setToken(res.data.accessToken);
+    }
   };
 
   const logout = () => {
@@ -204,6 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem('smilecare_token');
     } catch {
       // ignore
     }

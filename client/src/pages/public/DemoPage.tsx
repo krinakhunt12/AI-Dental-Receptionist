@@ -8,21 +8,36 @@ export const DemoPage: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    const userMsg = input;
-    setMessages((prev) => [...prev, { sender: 'user', text: userMsg }]);
+    const userMsg = input.trim();
+    const updated = [...messages, { sender: 'user', text: userMsg }];
+    setMessages(updated);
     setInput('');
 
-    setTimeout(() => {
-      let reply = "We have appointments open this Thursday with Dr. Krina Mehta at 10:00 AM or 2:30 PM. Would you like me to reserve one for you?";
-      if (userMsg.toLowerCase().includes('invisalign')) {
-        reply = "Invisalign treatment at SmileCare starts with a $100 assessment (applied towards treatment). Full cases range from $3,200 to $4,500 with flexible monthly payment plans!";
-      } else if (userMsg.toLowerCase().includes('insurance')) {
-        reply = "We accept all major PPO insurances including Delta Dental, MetLife, Cigna, and Guardian. We also handle claims submission for you!";
-      }
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: updated.map((m) => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text,
+          })),
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || "We have appointments open this week with Dr. Michael Vance. Would you like me to check available slots for you?";
       setMessages((prev) => [...prev, { sender: 'ai', text: reply }]);
-    }, 600);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: "We have appointments open this week with Dr. Michael Vance. Would you like me to check available slots for you?",
+        },
+      ]);
+    }
   };
 
   return (

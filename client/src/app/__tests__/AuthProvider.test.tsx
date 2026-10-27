@@ -9,7 +9,6 @@ import {
   getInitialUser,
   AUTH_STORAGE_KEY,
   TOKEN_STORAGE_KEY,
-  DEMO_USER,
   User,
 } from '../AuthProvider';
 import { RequireAuth, ProtectedRoute } from '../Guards';
@@ -35,21 +34,16 @@ const AuthTestConsumer: React.FC = () => {
 };
 
 describe('AuthProvider & Auth Hydration', () => {
-  const originalEnv = import.meta.env.VITE_DEMO_MODE;
-
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    import.meta.env.VITE_DEMO_MODE = originalEnv;
     localStorage.clear();
   });
 
-  it('1. empty storage in demo mode: falls back to DEMO_USER and sets isHydrated to true', async () => {
-    import.meta.env.VITE_DEMO_MODE = 'true';
-
+  it('1. empty storage: defaults to null user and sets isHydrated to true', async () => {
     render(
       <AuthProvider>
         <AuthTestConsumer />
@@ -57,9 +51,8 @@ describe('AuthProvider & Auth Hydration', () => {
     );
 
     expect(screen.getByTestId('hydrated').textContent).toBe('true');
-    expect(screen.getByTestId('authenticated').textContent).toBe('true');
-    expect(screen.getByTestId('user-id').textContent).toBe(DEMO_USER.id);
-    expect(screen.getByTestId('user-name').textContent).toBe(DEMO_USER.name);
+    expect(screen.getByTestId('authenticated').textContent).toBe('false');
+    expect(screen.getByTestId('user-id').textContent).toBe('NO_USER');
   });
 
   it('2. empty storage in production mode: defaults to null user and sets isHydrated to true', async () => {

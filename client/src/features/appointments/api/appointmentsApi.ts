@@ -1,8 +1,5 @@
 import { Appointment, AppointmentFilters } from '../../../types';
 import { apiClient } from '../../../lib/apiClient';
-import { mockDb } from '../../../mocks/mockDb';
-
-const delay = (ms: number = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface CreateAppointmentInput {
   patientId?: string;
@@ -23,39 +20,87 @@ export interface UpdateAppointmentInput extends Partial<CreateAppointmentInput> 
   status?: Appointment['status'];
 }
 
+function mapAppointment(a: any): Appointment {
+  const statusStr = String(a.status || 'Pending').toLowerCase();
+  let status: Appointment['status'] = 'Pending';
+  if (statusStr === 'confirmed') status = 'Confirmed';
+  else if (statusStr === 'completed') status = 'Completed';
+  else if (statusStr === 'cancelled') status = 'Cancelled';
+  else if (statusStr === 'no_show' || statusStr === 'no-show') status = 'No-show';
+
+  return {
+    id: a.id,
+    clinicId: a.clinicId,
+    patientId: a.patientId,
+    patientName: a.patient ? `${a.patient.firstName || ''} ${a.patient.lastName || ''}`.trim() : (a.patientName || 'Patient'),
+    patientPhone: a.patient?.phone || a.patientPhone || '',
+    doctorId: a.doctorId,
+    doctorName: a.doctor?.name || a.doctorName || 'Doctor',
+    treatment: a.treatment?.name || a.service?.name || a.treatment || 'Consultation',
+    treatmentId: a.treatmentId || a.serviceId,
+    date: a.startTime ? a.startTime.split('T')[0] : (a.date || ''),
+    time: a.startTime ? a.startTime.split('T')[1]?.slice(0, 5) : (a.time || ''),
+    durationMins: a.durationMins || 45,
+    status,
+    source: a.source || 'Website Widget',
+    notes: a.notes,
+    createdAt: a.createdAt,
+    updatedAt: a.updatedAt,
+  };
+}
+
 export async function getAppointments(
   clinicId: string,
   filters?: AppointmentFilters
 ): Promise<Appointment[]> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    await delay(300);
-    return mockDb.getAppointments(clinicId, filters);
-  }
-  return apiClient.get<Appointment[]>(`/api/clinics/${clinicId}/appointments`, {
-    params: filters as Record<string, string | number | boolean | undefined | null>,
-  });
+  const res = await apiClient<{ success?: boolean; data?: { appointments?: any[] } | any[] } | any[]>(
+    '/appointments',
+    { params: filters as Record<string, string | number | boolean | undefined | null> }
+  );
+
+  const rawList = Array.isArray(res)
+    ? res
+    : (Array.isArray((res as any)?.data)
+      ? (res as any).data
+      : (res as any)?.data?.appointments || []);
+
+  return rawList.map(mapAppointment);
 }
 
 export async function getAppointment(
   clinicId: string,
   id: string
 ): Promise<Appointment> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    await delay(300);
-    return mockDb.getAppointment(clinicId, id);
-  }
-  return apiClient.get<Appointment>(`/api/clinics/${clinicId}/appointments/${id}`);
+  const res = await apiClient<{ success?: boolean; data?: any } | any>(`/appointments/${id}`);
+  const item = (res as any)?.data || res;
+  return mapAppointment(item);
 }
 
 export async function createAppointment(
   clinicId: string,
   data: CreateAppointmentInput
 ): Promise<Appointment> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    await delay(300);
-    return mockDb.createAppointment(clinicId, data);
-  }
-  return apiClient.post<Appointment>(`/api/clinics/${clinicId}/appointments`, data);
+  const startTime = `${data.date}T${data.time}:00.000Z`;
+  const duration = data.durationMins || 45;
+  const endDateObj = new Date(new Date(startTime).getTime() + duration * 60000);
+  const endTime = endDateObj.toISOString();
+
+  const payload = {
+    doctorId: data.doctorId,
+    patientId: data.patientId,
+    serviceId: data.treatmentId,
+    startTime,
+    endTime,
+    notes: data.notes,
+    source: 'WEBSITE',
+  };
+
+  const res = await apiClient<{ success: boolean; data: any }>('/appointments', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  return mapAppointment(res.data);
 }
 
 export async function updateAppointment(
@@ -63,20 +108,29 @@ export async function updateAppointment(
   id: string,
   data: UpdateAppointmentInput
 ): Promise<Appointment> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    await delay(300);
-    return mockDb.updateAppointment(clinicId, id, data as Partial<Appointment>);
+  const payload: any = {};
+  if (data.status) {
+    payload.status = data.status.toUpperCase();
   }
-  return apiClient.patch<Appointment>(`/api/clinics/${clinicId}/appointments/${id}`, data);
+  if (data.date && data.time) {
+    payload.startTime = `${data.date}T${data.time}:00.000Z`;
+  }
+  if (data.notes) payload.notes = data.notes;
+
+  const res = await apiClient<{ success: boolean; data: any }>(`/appointments/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+  return mapAppointment(res.data);
 }
 
 export async function cancelAppointment(
   clinicId: string,
   id: string
 ): Promise<Appointment> {
-  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-    await delay(300);
-    return mockDb.cancelAppointment(clinicId, id);
-  }
-  return apiClient.patch<Appointment>(`/api/clinics/${clinicId}/appointments/${id}/cancel`);
+  const res = await apiClient<{ success: boolean; data: any }>(`/appointments/${id}/cancel`, {
+    method: 'POST',
+  });
+  return mapAppointment(res.data);
 }

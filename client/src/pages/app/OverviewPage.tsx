@@ -22,7 +22,8 @@ import { useDentists } from '../../features/dentists/api';
 import {
   useConversationsQuery,
   useTakeoverConversationMutation,
-} from '../../api/mockClient';
+} from '../../features/conversations/hooks/useConversations';
+import { Conversation } from '../../types';
 import {
   Calendar,
   MessageSquare,
@@ -125,11 +126,11 @@ export const OverviewPage: React.FC = () => {
   const todaySchedule = appointments.slice(0, 5); // top 5 for timeline view
 
   // Filter emergency & human needed
-  const emergencies = conversations.filter((c) => c.emergency || c.status === 'Emergency');
-  const needsHuman = conversations.filter((c) => c.status === 'Needs Human');
+  const emergencies = conversations.filter((c: Conversation) => c.emergency || c.status === 'Emergency');
+  const needsHuman = conversations.filter((c: Conversation) => c.status === 'Needs Human');
 
   // Selected conversation object
-  const selectedConv = conversations.find((c) => c.id === selectedConvId);
+  const selectedConv = conversations.find((c: Conversation) => c.id === selectedConvId);
 
   const handleRescheduleSubmit = () => {
     if (!rescheduleAptId) return;
@@ -324,7 +325,7 @@ export const OverviewPage: React.FC = () => {
             ) : null}
 
             {/* Emergency Alerts */}
-            {emergencies.map((conv) => (
+            {emergencies.map((conv: Conversation) => (
               <div
                 key={conv.id}
                 className="p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-1 animate-pulse"
@@ -353,7 +354,7 @@ export const OverviewPage: React.FC = () => {
             ))}
 
             {/* Waiting for Human */}
-            {needsHuman.map((conv) => (
+            {needsHuman.map((conv: Conversation) => (
               <div
                 key={conv.id}
                 className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1"
