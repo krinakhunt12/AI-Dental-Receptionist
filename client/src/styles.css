@@ -4,9 +4,33 @@
   --font-sans: 'Plus Jakarta Sans', 'Manrope', 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Outfit', 'Sora', 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-display: 'Sora', 'Outfit', sans-serif;
+
+  --z-sidebar: 30;
+  --z-header: 40;
+  --z-dropdown: 50;
+  --z-modal-backdrop: 60;
+  --z-modal: 70;
+  --z-modal-dropdown: 75;
+  --z-toast: 80;
+
+  --z-30: 30;
+  --z-40: 40;
+  --z-50: 50;
+  --z-60: 60;
+  --z-70: 70;
+  --z-75: 75;
+  --z-80: 80;
 }
 
 :root {
+  --z-sidebar: 30;
+  --z-header: 40;
+  --z-dropdown: 50;
+  --z-modal-backdrop: 60;
+  --z-modal: 70;
+  --z-modal-dropdown: 75;
+  --z-toast: 80;
+
   --brand-primary: #0d9488;
   --brand-primary-hover: #0f766e;
   --brand-primary-light: #ccfbf1;
@@ -18,6 +42,29 @@
   --app-border: #e2e8f0;
   --app-text: #0f172a;
   --app-muted: #64748b;
+}
+
+/* Standard Z-Index Utility Classes */
+@utility z-sidebar {
+  z-index: 30;
+}
+@utility z-header {
+  z-index: 40;
+}
+@utility z-dropdown {
+  z-index: 50;
+}
+@utility z-modal-backdrop {
+  z-index: 60;
+}
+@utility z-modal {
+  z-index: 70;
+}
+@utility z-modal-dropdown {
+  z-index: 75;
+}
+@utility z-toast {
+  z-index: 80;
 }
 
 /* Light theme for clinic app layout */

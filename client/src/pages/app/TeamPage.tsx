@@ -95,7 +95,7 @@ export const TeamPage: React.FC = () => {
       )}
 
       <Modal
-        isOpen={isInviteOpen}
+        open={isInviteOpen}
         onClose={() => setIsInviteOpen(false)}
         title="Invite Clinic Staff Member"
         description="Select role permissions for the new staff member."

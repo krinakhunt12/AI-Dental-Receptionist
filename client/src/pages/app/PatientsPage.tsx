@@ -1,21 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { usePatients } from '../../features/patients/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { usePatients, createPatient } from '../../features/patients/api';
+import { useAuth } from '../../app/AuthProvider';
 import { useUpdateConsent } from '../../features/appointments/hooks/useReminders';
+import { queryKeys } from '../../lib/queryKeys';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
 import { Drawer } from '../../components/ui/Drawer';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { Toggle } from '../../components/ui/Toggle';
 import { useUIStore } from '../../store/useUIStore';
-import { Search, Download, Plus, User, Phone, Mail, Calendar, FileText, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react';
+import { Search, Download, Plus, User, Phone, Mail, Calendar, FileText, CheckCircle2, MessageSquare, Smartphone, AlertCircle } from 'lucide-react';
 
 export const PatientsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [queryInput, setQueryInput] = useState(initialSearch);
   const [debouncedQuery, setDebouncedQuery] = useState(initialSearch);
@@ -34,6 +41,87 @@ export const PatientsPage: React.FC = () => {
   const { addToast } = useUIStore();
 
   const [selectedPatId, setSelectedPatId] = useState<string | null>(null);
+
+  // Add Patient Modal State
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [gender, setGender] = useState('Other');
+  const [dob, setDob] = useState('');
+  const [medicalNotes, setMedicalNotes] = useState('');
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetPatientForm = () => {
+    setFirstName('');
+    setLastName('');
+    setPhone('');
+    setEmail('');
+    setGender('Other');
+    setDob('');
+    setMedicalNotes('');
+    setInlineError(null);
+    setIsSubmitting(false);
+  };
+
+  const handleOpenAddPatient = () => {
+    resetPatientForm();
+    setIsAddPatientOpen(true);
+  };
+
+  const handleCreatePatientSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInlineError(null);
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setInlineError('First name and Last name are both required.');
+      return;
+    }
+    if (!phone.trim() || phone.trim().length < 5) {
+      setInlineError('A valid phone number (at least 5 digits) is required.');
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setInlineError('Please enter a valid email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createPatient({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        gender,
+        dateOfBirth: dob || undefined,
+        medicalNotes: medicalNotes.trim() || undefined,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.patients(user?.clinicId || ''),
+      });
+      await queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey.includes('patients'),
+      });
+
+      addToast({
+        type: 'success',
+        title: 'Patient Registered Successfully',
+        message: `${firstName.trim()} ${lastName.trim()} has been added to the directory.`,
+      });
+
+      setIsAddPatientOpen(false);
+      resetPatientForm();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to register patient.';
+      setInlineError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Consent states for selected patient
   const [waConsent, setWaConsent] = useState(true);
@@ -97,7 +185,7 @@ export const PatientsPage: React.FC = () => {
           <Button variant="outline" size="sm" icon={Download} onClick={handleExportCSV}>
             Export CSV
           </Button>
-          <Button size="sm" icon={Plus} onClick={() => addToast({ type: 'info', title: 'Add Patient Modal' })}>
+          <Button size="sm" icon={Plus} onClick={handleOpenAddPatient}>
             Add Patient
           </Button>
         </div>
@@ -144,7 +232,7 @@ export const PatientsPage: React.FC = () => {
               : 'No patient profiles exist in the system yet. Register your first patient to begin.'
           }
           actionLabel={debouncedQuery ? 'Clear Search' : 'Add New Patient'}
-          onAction={debouncedQuery ? () => setQueryInput('') : () => addToast({ type: 'info', title: 'Add Patient Modal' })}
+          onAction={debouncedQuery ? () => setQueryInput('') : handleOpenAddPatient}
           actionIcon={debouncedQuery ? undefined : Plus}
         />
       )}
@@ -213,8 +301,112 @@ export const PatientsPage: React.FC = () => {
       )}
 
       {/* Patient Profile Drawer */}
+      {/* ADD PATIENT MODAL */}
+      <Modal
+        open={isAddPatientOpen}
+        onClose={() => {
+          setIsAddPatientOpen(false);
+          resetPatientForm();
+        }}
+        title="Add New Patient"
+        description="Register a new patient into the clinic directory."
+        size="lg"
+      >
+        <form onSubmit={handleCreatePatientSubmit} className="space-y-4">
+          {inlineError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium flex items-center gap-2 animate-fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{inlineError}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="First Name *"
+              placeholder="e.g. Meera"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
+            <Input
+              label="Last Name *"
+              placeholder="e.g. Patel"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Phone Number *"
+              placeholder="e.g. +91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              placeholder="e.g. meera@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Gender"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              options={[
+                { value: 'Female', label: 'Female' },
+                { value: 'Male', label: 'Male' },
+                { value: 'Other', label: 'Other' },
+              ]}
+            />
+            <Input
+              label="Date of Birth"
+              type="date"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+              Medical Notes / Known Allergies
+            </label>
+            <textarea
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-500"
+              rows={2}
+              placeholder="e.g. Penicillin allergy, mild hypertension"
+              value={medicalNotes}
+              onChange={(e) => setMedicalNotes(e.target.value)}
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsAddPatientOpen(false);
+                resetPatientForm();
+              }}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isSubmitting}>
+              Register Patient
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
       <Drawer
-        isOpen={!!selectedPatId}
+        open={!!selectedPatId}
         onClose={() => setSelectedPatId(null)}
         title={selectedPatient ? `Patient: ${selectedPatient.name}` : 'Profile'}
         description={`ID: ${selectedPatient?.id} • Phone: ${selectedPatient?.phone}`}
@@ -222,7 +414,7 @@ export const PatientsPage: React.FC = () => {
         {selectedPatient && (
           <div className="space-y-6 text-xs">
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <p><strong>Email:</strong> {selectedPatient.email}</p>
+              <p><strong>Email:</strong> {selectedPatient.email || '—'}</p>
               <p><strong>Medical History:</strong> {(selectedPatient.medicalHistory || ['No Known Allergies']).join(', ')}</p>
               <p><strong>Last Visit:</strong> {selectedPatient.lastVisit || 'N/A'}</p>
               <p><strong>Total Appointments:</strong> {selectedPatient.totalVisits ?? 1}</p>

@@ -563,7 +563,7 @@ export const OverviewPage: React.FC = () => {
 
       {/* Reschedule Modal */}
       <Modal
-        isOpen={!!rescheduleAptId}
+        open={!!rescheduleAptId}
         onClose={() => setRescheduleAptId(null)}
         title="Reschedule Appointment"
         description="Choose a new date and time slot for this booking."
@@ -600,7 +600,7 @@ export const OverviewPage: React.FC = () => {
 
       {/* Conversation Detail Drawer */}
       <Drawer
-        isOpen={!!selectedConvId}
+        open={!!selectedConvId}
         onClose={() => setSelectedConvId(null)}
         title={selectedConv ? `Patient: ${selectedConv.patientName}` : 'Conversation'}
         description={`Channel: ${selectedConv?.channel || 'Website'} • Status: ${selectedConv?.status || 'Active'}`}

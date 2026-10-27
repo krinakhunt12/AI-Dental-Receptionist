@@ -43,3 +43,23 @@ export async function getPatients(
 
   return rawList.map(mapPatient);
 }
+
+export interface CreatePatientInput {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+  medicalNotes?: string;
+}
+
+export async function createPatient(data: CreatePatientInput): Promise<Patient> {
+  const res = await apiClient.post<{ success: boolean; data: any; message?: string }>(
+    '/patients',
+    data
+  );
+  const created = (res as any)?.data || res;
+  return mapPatient(created);
+}

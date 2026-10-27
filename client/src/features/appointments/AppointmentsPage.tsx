@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppointmentsQuery } from './hooks/useAppointmentsQuery';
+import { Modal } from '../../components/ui/Modal';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -313,109 +314,106 @@ export default function AppointmentsPage() {
       )}
 
       {/* New Appointment Modal Form */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xl max-w-lg w-full flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h2 className="text-lg font-bold text-slate-900 font-heading">Book New Appointment</h2>
-              <button className="text-slate-400 hover:text-slate-700 text-lg font-bold cursor-pointer" onClick={() => setShowModal(false)}>✕</button>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title="Book New Appointment"
+        description="Select service procedure, assigned dentist, and calendar time slot."
+        size="lg"
+      >
+        <form onSubmit={handleCreate} className="flex flex-col gap-3.5">
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase">Patient Full Name</label>
+            <input
+              className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              placeholder="e.g. Rahul Patel"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700 uppercase">Phone Number</label>
+            <input
+              className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
+              value={patientPhone}
+              onChange={(e) => setPatientPhone(e.target.value)}
+              placeholder="e.g. +91 9876543210"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase">Service Procedure</label>
+              <select
+                className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
+                value={activeServiceId}
+                onChange={(e) => setServiceId(e.target.value)}
+              >
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name} (${s.price})</option>
+                ))}
+              </select>
             </div>
 
-            <form onSubmit={handleCreate} className="flex flex-col gap-3.5">
-              <div>
-                <label className="text-xs font-bold text-slate-700 uppercase">Patient Full Name</label>
-                <input
-                  className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                  placeholder="e.g. Rahul Patel"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 uppercase">Phone Number</label>
-                <input
-                  className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
-                  value={patientPhone}
-                  onChange={(e) => setPatientPhone(e.target.value)}
-                  placeholder="e.g. +91 9876543210"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase">Service Procedure</label>
-                  <select
-                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
-                    value={activeServiceId}
-                    onChange={(e) => setServiceId(e.target.value)}
-                  >
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name} (${s.price})</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase">Assigned Dentist</label>
-                  <select
-                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
-                    value={activeDentistId}
-                    onChange={(e) => setDentistId(e.target.value)}
-                  >
-                    {dentists.map((d) => (
-                      <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase">Appointment Date</label>
-                  <input
-                    type="date"
-                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 uppercase">Start Time</label>
-                  <input
-                    type="time"
-                    className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-md shadow-teal-600/20 cursor-pointer disabled:opacity-50"
-                  disabled={submitting}
-                >
-                  {submitting ? 'Booking…' : 'Confirm Booking'}
-                </button>
-              </div>
-            </form>
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase">Assigned Dentist</label>
+              <select
+                className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500 bg-white cursor-pointer"
+                value={activeDentistId}
+                onChange={(e) => setDentistId(e.target.value)}
+              >
+                {dentists.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase">Appointment Date</label>
+              <input
+                type="date"
+                className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 uppercase">Start Time</label>
+              <input
+                type="time"
+                className="w-full px-3.5 py-2 mt-1 border border-slate-200 rounded-xl text-sm outline-none focus:border-teal-500"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+            <button
+              type="button"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-md shadow-teal-600/20 cursor-pointer disabled:opacity-50"
+              disabled={submitting}
+            >
+              {submitting ? 'Booking…' : 'Confirm Booking'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -426,7 +426,7 @@ export const CareProtocolsPage: React.FC = () => {
 
       {/* PROTOCOL EDITOR & DETAILS DRAWER */}
       <Drawer
-        isOpen={!!selectedProtocol}
+        open={!!selectedProtocol}
         onClose={() => setSelectedProtocol(null)}
         title={selectedProtocol ? `${selectedProtocol.name} (v${selectedProtocol.version})` : 'Protocol'}
         description={`Status: ${selectedProtocol?.status} • Treatment: ${selectedProtocol?.treatment?.name || 'General'}`}
@@ -680,7 +680,7 @@ export const CareProtocolsPage: React.FC = () => {
 
       {/* CONFIRM APPROVAL MODAL */}
       <Modal
-        isOpen={!!protocolToApprove}
+        open={!!protocolToApprove}
         onClose={() => setProtocolToApprove(null)}
         title={`Approve Protocol: ${protocolToApprove?.name}`}
         description="Verify clinical safety guidelines before making this protocol live."

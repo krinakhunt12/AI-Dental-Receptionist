@@ -194,7 +194,7 @@ export const AppLayout: React.FC = () => {
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* DESKTOP LEFT SIDEBAR */}
         <aside
-          className={`hidden md:flex flex-col h-full bg-white border-r border-slate-200 transition-all duration-300 z-20 shrink-0 ${sidebarCollapsed ? 'w-[72px]' : 'w-[240px]'
+          className={`hidden md:flex flex-col h-full bg-white border-r border-slate-200 transition-all duration-300 z-sidebar shrink-0 ${sidebarCollapsed ? 'w-[72px]' : 'w-[240px]'
             }`}
         >
           {/* Clinic Brand Header */}
@@ -324,12 +324,12 @@ export const AppLayout: React.FC = () => {
 
         {/* MOBILE DRAWER BACKDROP & SIDEBAR */}
         {mobileDrawerOpen && (
-          <div className="md:hidden fixed inset-0 z-50 flex">
+          <div className="md:hidden fixed inset-0 z-modal flex">
             <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-modal-backdrop"
               onClick={() => setMobileDrawerOpen(false)}
             />
-            <div className="relative w-72 bg-white h-full flex flex-col z-10 shadow-2xl p-4">
+            <div className="relative w-72 bg-white h-full flex flex-col z-modal shadow-2xl p-4">
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-teal-600 text-white font-bold flex items-center justify-center">
@@ -371,7 +371,7 @@ export const AppLayout: React.FC = () => {
         {/* MAIN CONTENT AREA */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           {/* TOPBAR */}
-          <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 z-10">
+          <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 z-header">
             {/* Mobile hamburger button */}
             <div className="flex items-center gap-3 md:gap-4">
               <button
@@ -435,7 +435,7 @@ export const AppLayout: React.FC = () => {
                 </button>
 
                 {isNotifOpen && (
-                  <div className="absolute right-0 mt-2 w-88 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in space-y-3 max-h-[460px] flex flex-col">
+                  <div className="absolute right-0 mt-2 w-88 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-dropdown animate-fade-in space-y-3 max-h-[460px] flex flex-col">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
                       <span className="text-xs font-bold text-slate-900">Staff Notifications & Alerts</span>
                       {emergencyCount > 0 ? (
@@ -532,7 +532,7 @@ export const AppLayout: React.FC = () => {
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 animate-fade-in space-y-3">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-dropdown animate-fade-in space-y-3">
                     <div className="px-2 py-1.5 border-b border-slate-100">
                       <p className="text-xs font-bold text-slate-900">{user?.name}</p>
                       <p className="text-[11px] text-slate-400">{user?.email}</p>
@@ -587,7 +587,7 @@ export const AppLayout: React.FC = () => {
       </div>
 
       {/* MOBILE BOTTOM NAVIGATION TAB BAR */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 flex items-center justify-around z-40 px-2 shadow-lg">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 flex items-center justify-around z-header px-2 shadow-lg">
         <Link
           to="/app"
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${location.pathname === '/app' ? 'text-teal-600' : 'text-slate-400'
@@ -631,7 +631,7 @@ export const AppLayout: React.FC = () => {
 
       {/* QUICK APPOINTMENT MODAL */}
       <Modal
-        isOpen={isQuickAptOpen}
+        open={isQuickAptOpen}
         onClose={() => setIsQuickAptOpen(false)}
         title="Schedule New Appointment"
         description="Book a patient into a dentist's calendar slot."

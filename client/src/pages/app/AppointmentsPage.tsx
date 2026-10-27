@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
+import { Modal } from '../../components/ui/Modal';
 import { Drawer } from '../../components/ui/Drawer';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -24,6 +25,7 @@ export const AppointmentsPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>(initialStatus);
   const [searchInput, setSearchInput] = useState<string>(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = useState<string>(initialSearch);
+  const [aptToCancel, setAptToCancel] = useState<{ id: string; patientName: string } | null>(null);
 
   // 300ms debounce
   useEffect(() => {
@@ -312,7 +314,7 @@ export const AppointmentsPage: React.FC = () => {
                             size="sm"
                             variant="ghost"
                             className="text-rose-600 hover:text-rose-700"
-                            onClick={() => cancelAppointmentMut.mutate(apt.id)}
+                            onClick={() => setAptToCancel({ id: apt.id, patientName: apt.patientName })}
                           >
                             Cancel
                           </Button>
@@ -329,7 +331,7 @@ export const AppointmentsPage: React.FC = () => {
 
       {/* APPOINTMENT DETAIL DRAWER */}
       <Drawer
-        isOpen={!!selectedAptId}
+        open={!!selectedAptId}
         onClose={() => setSelectedAptId(null)}
         title={selectedApt ? `Appointment: ${selectedApt.patientName}` : 'Detail'}
       >
@@ -373,9 +375,7 @@ export const AppointmentsPage: React.FC = () => {
                   variant="outline"
                   className="text-rose-600 border-rose-200 hover:bg-rose-50"
                   onClick={() => {
-                    cancelAppointmentMut.mutate(selectedApt.id);
-                    addToast({ type: 'info', title: 'Appointment Cancelled' });
-                    setSelectedAptId(null);
+                    setAptToCancel({ id: selectedApt.id, patientName: selectedApt.patientName });
                   }}
                 >
                   Cancel Slot
@@ -388,6 +388,47 @@ export const AppointmentsPage: React.FC = () => {
           </div>
         )}
       </Drawer>
+
+      {/* CANCEL CONFIRMATION MODAL */}
+      <Modal
+        open={!!aptToCancel}
+        onClose={() => setAptToCancel(null)}
+        title="Cancel Appointment Slot"
+        description="Are you sure you want to cancel this booking?"
+        size="sm"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-600 leading-relaxed">
+            Cancelling this appointment for <strong>{aptToCancel?.patientName}</strong> will release the booked slot on the doctor's calendar and trigger an automated cancellation notice.
+          </p>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setAptToCancel(null)}>
+              Keep Appointment
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              isLoading={cancelAppointmentMut.isPending}
+              onClick={() => {
+                if (aptToCancel) {
+                  cancelAppointmentMut.mutate(aptToCancel.id, {
+                    onSuccess: () => {
+                      addToast({ type: 'info', title: 'Appointment Cancelled' });
+                      setAptToCancel(null);
+                      if (selectedAptId === aptToCancel.id) {
+                        setSelectedAptId(null);
+                      }
+                    },
+                  });
+                }
+              }}
+            >
+              Confirm Cancellation
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

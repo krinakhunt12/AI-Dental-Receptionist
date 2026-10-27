@@ -156,6 +156,8 @@ export const api = {
   conversations: () => fetch('/api/conversations', { headers: getAuthHeaders() }).then((r) => parse<ConversationLog[]>(r)),
 
   services: () => fetch('/api/services', { headers: getAuthHeaders() }).then((r) => parse<Service[]>(r)),
+  createService: (data: { name: string; price: number; durationMins?: number; description?: string }) =>
+    fetch('/api/services', json('POST', data)).then((r) => parse<Service>(r)),
   dentists: () => fetch('/api/dentists', { headers: getAuthHeaders() }).then((r) => parse<Dentist[]>(r)),
 };
 

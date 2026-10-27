@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useUIStore } from '../../store/useUIStore';
 import { Search, Calendar, Users, MessageSquare, Settings, User, FileText, ArrowRight, X } from 'lucide-react';
@@ -42,14 +43,18 @@ export const CommandPalette: React.FC = () => {
     navigate(path);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4">
+  if (!commandPaletteOpen) return null;
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-modal flex items-start justify-center pt-20 p-4" role="dialog" aria-modal="true">
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity z-modal-backdrop"
         onClick={() => setCommandPaletteOpen(false)}
+        aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in z-10">
+      <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in z-modal">
         <div className="flex items-center px-4 py-3 border-b border-slate-100 dark:border-slate-800">
           <Search className="w-5 h-5 text-slate-400 mr-3" />
           <input
@@ -97,6 +102,7 @@ export const CommandPalette: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

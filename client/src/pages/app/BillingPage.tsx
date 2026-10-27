@@ -225,7 +225,7 @@ export const BillingPage: React.FC = () => {
       </div>
 
       {/* Upgrade Plan Modal */}
-      <Modal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} title="Select Subscription Plan">
+      <Modal open={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} title="Select Subscription Plan">
         <div className="space-y-4">
           <p className="text-xs text-slate-500">Choose the optimal tier for your dental practice volume.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -254,7 +254,7 @@ export const BillingPage: React.FC = () => {
       </Modal>
 
       {/* Cancel Modal */}
-      <Modal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} title="Cancel Subscription">
+      <Modal open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} title="Cancel Subscription">
         <div className="space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">
             Are you sure you want to cancel your SmileCare AI subscription? Your AI receptionist will continue to handle appointments until the current billing period expires.

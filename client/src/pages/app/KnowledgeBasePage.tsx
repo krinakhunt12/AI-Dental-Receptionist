@@ -8,11 +8,12 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import { useUIStore } from '../../store/useUIStore';
-import { Brain, Upload, Plus, FileText, CheckCircle2, Trash2, Sparkles, Send } from 'lucide-react';
+import { Brain, Upload, Plus, FileText, CheckCircle2, Trash2, Sparkles, Send, AlertTriangle } from 'lucide-react';
 
 export const KnowledgeBasePage: React.FC = () => {
   const { data: docs = [], isLoading, isError, refetch } = useKnowledgeDocs();
@@ -26,6 +27,16 @@ export const KnowledgeBasePage: React.FC = () => {
 
   const [newQ, setNewQ] = useState('');
   const [newA, setNewA] = useState('');
+
+  // Upload Modal State
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadDocName, setUploadDocName] = useState('');
+  const [uploadDocContent, setUploadDocContent] = useState('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Delete Confirmation Modal State
+  const [docToDelete, setDocToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const handleAddFaq = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,19 +56,50 @@ export const KnowledgeBasePage: React.FC = () => {
     }
   };
 
+  const handleUploadDoc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploadError(null);
+    if (!uploadDocName.trim() || !uploadDocContent.trim()) {
+      setUploadError('Document title and text content are required.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      await addDocMut.mutateAsync({
+        name: uploadDocName.trim(),
+        text: uploadDocContent.trim(),
+      });
+      addToast({
+        type: 'success',
+        title: 'Document Uploaded & Indexed',
+        message: `${uploadDocName.trim()} has been vectorized into RAG knowledge.`,
+      });
+      setIsUploadModalOpen(false);
+      setUploadDocName('');
+      setUploadDocContent('');
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to upload document.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!docToDelete) return;
+    try {
+      await deleteDocMut.mutateAsync(docToDelete.id);
+      addToast({ type: 'info', title: 'Document removed', message: 'Indexed passages updated.' });
+      setDocToDelete(null);
+    } catch {
+      addToast({ type: 'error', title: 'Error deleting', message: 'Failed to delete knowledge document.' });
+    }
+  };
+
   const handleTestSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!testQuestion.trim()) return;
     setActiveSearch(testQuestion.trim());
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteDocMut.mutateAsync(id);
-      addToast({ type: 'info', title: 'Document removed', message: 'Indexed passages updated.' });
-    } catch {
-      addToast({ type: 'error', title: 'Error deleting', message: 'Failed to delete knowledge document.' });
-    }
   };
 
   return (
@@ -73,9 +115,21 @@ export const KnowledgeBasePage: React.FC = () => {
           </p>
         </div>
 
-        <Badge variant="teal" icon={<CheckCircle2 className="w-4 h-4" />}>
-          RAG Vector Index Synced ({docs.length} Documents)
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            icon={Upload}
+            onClick={() => {
+              setUploadError(null);
+              setIsUploadModalOpen(true);
+            }}
+          >
+            Upload Document
+          </Button>
+          <Badge variant="teal" icon={<CheckCircle2 className="w-4 h-4" />}>
+            RAG Vector Index Synced ({docs.length} Documents)
+          </Badge>
+        </div>
       </div>
 
       {isLoading && (
@@ -160,7 +214,7 @@ export const KnowledgeBasePage: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleDelete(doc.id)}
+                        onClick={() => setDocToDelete({ id: doc.id, name: doc.name })}
                         className="text-slate-400 hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
                         title="Delete Document"
                       >
@@ -221,6 +275,99 @@ export const KnowledgeBasePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* UPLOAD KNOWLEDGE BASE MODAL */}
+      <Modal
+        open={isUploadModalOpen}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          setUploadDocName('');
+          setUploadDocContent('');
+          setUploadError(null);
+        }}
+        title="Upload Knowledge Document"
+        description="Add a clinical policy, FAQ guide, or clinic handbook to train Maya's AI responses."
+        size="lg"
+      >
+        <form onSubmit={handleUploadDoc} className="space-y-4">
+          {uploadError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium flex items-center gap-2 animate-fade-in">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{uploadError}</span>
+            </div>
+          )}
+
+          <Input
+            label="Document Title *"
+            placeholder="e.g. Post-Extraction Care & Fasting Instructions"
+            value={uploadDocName}
+            onChange={(e) => setUploadDocName(e.target.value)}
+            required
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+              Document Text Content *
+            </label>
+            <textarea
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-500"
+              rows={6}
+              placeholder="Paste complete clinic policy, instructions, parking details, or insurance coverage guidelines..."
+              value={uploadDocContent}
+              onChange={(e) => setUploadDocContent(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsUploadModalOpen(false);
+                setUploadDocName('');
+                setUploadDocContent('');
+                setUploadError(null);
+              }}
+              disabled={isUploading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isUploading}>
+              Upload & Vectorize
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal
+        open={!!docToDelete}
+        onClose={() => setDocToDelete(null)}
+        title="Confirm Document Deletion"
+        description="Are you sure you want to remove this knowledge document?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600">
+            Deleting <strong>{docToDelete?.name}</strong> will remove all its indexed passages from the clinic vector search. Maya will no longer use this document to answer patient queries.
+          </p>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setDocToDelete(null)}>
+              Keep Document
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleConfirmDelete}
+              isLoading={deleteDocMut.isPending}
+            >
+              Delete Document
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
