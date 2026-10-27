@@ -245,25 +245,63 @@ In dental medicine, **hydration** is fundamental to oral pathophysiology, treatm
 
 ---
 
-## 6. 🚀 SmileCare AI Client Auth Hydration & Real API Migration (Task 6)
+## 6. 🚀 SmileCare AI Client Auth Hydration & Real API Migration
 
 ### 6.1 Client Auth Hydration Architecture (`isHydrated`)
 In SmileCare AI, authentication state is maintained via `AuthProvider.tsx`:
 1. **Zero-FOUC Guarantee**: On initial boot, `isHydrated` starts as `false`. Route guards (`RequireAuth`, `RequireRole`) display a sleek full-screen clinic loading skeleton while storage tokens are verified.
 2. **Corrupted Storage Shield**: Token parsing is wrapped in strict `try/catch` handlers that automatically purge corrupted strings and reset auth safely.
 3. **Cross-Tab Synchronization**: A native `window.addEventListener('storage', ...)` listener synchronizes logout or role changes in real time across browser tabs.
+4. **Complete Elimination of `DEMO_USER` (Task 7)**:
+   - `DEMO_USER` has been completely deleted.
+   - If no valid stored session exists, `user = null` and `RequireAuth` unconditionally redirects to `/login`.
+   - Logging in calls the real backend `/auth/login` endpoint, storing the issued JWT token.
 
-### 6.2 Removal of Static & Mock Data
-All hardcoded dashboard constants and fake arrays were completely removed from React components:
-- **`OverviewPage.tsx`**: Removed fake `trendData`, `sourceData`, `topQuestions`, and `peakHours` arrays. Wired to real `useDashboardSummary`, `useAppointmentsTrend`, `useTreatmentsBreakdown`, and `useAiReceptionist` hooks.
-- **`AnalyticsPage.tsx`**: Removed fake `monthlyVolume` array. Wired to live appointments trend, treatments breakdown, and dentist slot utilization.
-- **`TeamPage.tsx`**: Removed hardcoded staff list. Wired to `useTeamUsers()` calling `GET /users`.
-- **`SettingsPage.tsx`**: Removed component-only state. Wired to `useClinicProfile()` and `useUpdateClinicProfile()` calling `GET/PATCH /clinic`.
-- **`AppLayout.tsx`**: Removed hardcoded notification dropdown items (`Priya Sharma...`). Wired to live `useStaffNotifications()` polling every 30s with emergency alert badge and one-click acknowledge action.
-- **Environment**: Set `VITE_USE_MOCK_API=false` in `.env` and `.env.development` so all queries and mutations execute against the live backend API server.
+---
 
-### 6.3 Verification Summary
-- **Client Build**: `npm run build` exits with code 0 (2,730 modules transformed, 0 TypeScript errors).
-- **Server Typecheck**: `npx tsc --noEmit` exits with code 0 (all routes and controllers strictly type-safe).
-- **Backend Endpoints**: All endpoints scoped by server-authenticated `req.clinicId` with zero cross-tenant leakage.
+## 7. 🧹 Task 7: Complete Mock Layer Deletion & Real Backend Rewiring
+
+### 7.1 Deleted Mock Infrastructure
+The entire client-side mock infrastructure has been eliminated:
+- `client/src/mocks/mockDb.ts` — **Deleted** (all in-memory arrays and mutation mocks removed).
+- `client/src/mocks/seedData.ts` — **Deleted** (all fake patient, doctor, and conversation fixtures removed).
+- `client/src/api/mockClient.ts` — **Deleted** (all simulated endpoints and latency timers removed).
+- `client/src/features/dashboard/DashboardPage.tsx` — **Deleted** (legacy unreferenced mock prototype removed).
+- Environment flags `VITE_USE_MOCK_API` and `VITE_DEMO_MODE` — **Removed** from `.env`, `.env.development`, and `.env.example`.
+
+### 7.2 Rewired Pages & Real API Endpoints
+
+Every screen now communicates strictly with Express + Prisma + Postgres:
+
+| Page / Feature | Hook / API Client | Backend Endpoint | Status |
+|---|---|---|---|
+| **Login** (`LoginPage.tsx`) | `login(email, password)` | `POST /auth/login` | Real Auth & JWT |
+| **Overview Dashboard** (`OverviewPage.tsx`) | `useDashboardSummary`, `useAppointmentsTrend`, `useTreatmentsBreakdown` | `GET /dashboard/summary`, `GET /dashboard/appointments-trend`, `GET /dashboard/treatments-breakdown` | Real DB Aggregations |
+| **Appointments Calendar** (`AppointmentsPage.tsx`) | `useAppointments`, `useCreateAppointment`, `useUpdateAppointment` | `GET /appointments`, `POST /appointments`, `PATCH /appointments/:id` | Real DB |
+| **Patients Directory** (`PatientsPage.tsx`) | `usePatients` | `GET /patients` | Real DB |
+| **Dentists Directory** (`DoctorsPage.tsx`) | `useDentists` | `GET /dentists` | Real DB |
+| **Services / Treatments** | `useTreatments` | `GET /treatments` | Real DB |
+| **AI Conversations** (`ConversationsPage.tsx`) | `useConversationsQuery`, `useConversationQuery`, `useTakeoverConversationMutation` | `GET /ai/conversations`, `GET /ai/conversations/:id/messages`, `POST /ai/conversations/:id/takeover` | Real DB & AI Service |
+| **Knowledge Base** (`KnowledgeBasePage.tsx`) | `useKnowledgeDocsQuery`, `useTrainFaqMutation`, `useDeleteKnowledgeDocMutation`, `useSearchKnowledgeQuery` | `GET /knowledge`, `POST /knowledge`, `DELETE /knowledge/:id`, `GET /knowledge/search` | Real RAG Knowledge |
+| **Public AI Chat & Demos** (`HomePage.tsx`, `DemoPage.tsx`) | `apiClient.post('/chat')` | `POST /chat` | Real AI Agent |
+| **Staff Care Protocols** (`CareProtocolsPage.tsx`) | `useCareProtocols`, `useApproveCareProtocol` | `GET /care-protocols`, `POST /care-protocols/:id/approve` | Real DB & RBAC |
+| **Reminders Queue** (`RemindersOverviewPage.tsx`) | `useReminders`, `useDispatchReminder` | `GET /reminders`, `POST /reminders/:id/dispatch` | Real DB Scheduler |
+| **Billing & Invoices** (`BillingPage.tsx`) | `useSubscription`, `useInvoices`, `useUpdateSubscriptionPlan` | `GET /subscriptions`, `GET /subscriptions/invoices`, `PATCH /subscriptions/plan` | Real DB Subscription |
+| **Team Management** (`TeamPage.tsx`) | `useTeamUsers`, `useInviteUser` | `GET /users`, `POST /users/invite` | Real DB Users |
+| **Clinic Settings** (`SettingsPage.tsx`) | `useClinicProfile`, `useUpdateClinicProfile` | `GET /clinic`, `PATCH /clinic` | Real DB Clinic |
+| **Emergency Notifications** (`AppLayout.tsx`) | `useStaffNotifications`, `useAcknowledgeStaffNotification` | `GET /notifications/staff`, `PATCH /notifications/staff/:id/acknowledge` | Real DB Alerts |
+
+### 7.3 Endpoints Created on Backend
+To support complete mock elimination, the following endpoints were created, tested, and mounted:
+1. `GET /knowledge` — Scoped RAG documents list for clinic.
+2. `POST /knowledge` — Ingest FAQ or document into clinic's knowledge base.
+3. `DELETE /knowledge/:id` — Delete document from knowledge base.
+4. `GET /knowledge/search?query=...` — Semantic & keyword RAG search across clinic documents.
+5. `POST /chat` — Live conversational endpoint streaming through dental AI agent.
+6. `GET /stats` — High-level clinic stats summary (appointments, treatments, doctors, patients, conversations).
+
+### 7.4 Verification Results
+- **Client Build (`npm run build`)**: Exited with code `0`.
+- **Server Typecheck (`npx tsc --noEmit`)**: Exited with code `0`.
+- **Grep Audit**: Zero remaining matches for `mockDb`, `mockApi`, `VITE_USE_MOCK_API`, `USE_MOCK`, or `DEMO_USER` across the application.
 

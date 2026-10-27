@@ -29,9 +29,6 @@ export const CommandPalette: React.FC = () => {
     { title: 'Train AI Knowledge Base', category: 'Manage', icon: FileText, path: '/app/knowledge-base' },
     { title: 'Widget Studio', category: 'Account', icon: Settings, path: '/app/widget' },
     { title: 'Billing & Subscriptions', category: 'Account', icon: Settings, path: '/app/billing' },
-    // Mock patient search results
-    { title: 'Priya Sharma (Patient Profile)', category: 'Patient', icon: User, path: '/app/patients/pat_101' },
-    { title: 'Rahul Verma (Root Canal Booking)', category: 'Appointment', icon: Calendar, path: '/app/appointments' },
   ];
 
   const filtered = items.filter((i) =>

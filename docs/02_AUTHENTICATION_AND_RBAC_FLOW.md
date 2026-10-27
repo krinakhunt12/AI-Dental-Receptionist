@@ -38,5 +38,13 @@ Supported roles within a dental practice tenant:
 | `DENTIST` / `DOCTOR` | Clinical protocol approval, view assigned appointments & patients, schedule availability |
 | `RECEPTIONIST` | Manage calendar, book/reschedule slots, patient directory, view triage alerts |
 
-## 3. Server Enforcement
-Every protected route enforces role access via `requireRole(['OWNER', 'DENTIST', ...])`. Even if the client-side UI hides a button, unauthorized requests sent directly to the API fail with `403 Forbidden`.
+## 3. Server Enforcement & Zero Mock Policy
+- **Elimination of Mock/Demo Users**: `DEMO_USER` has been completely deleted from `AuthProvider`.
+- **Unauthenticated Redirection**: A fresh browser or incognito session starts with `user = null`. `RequireAuth` unconditionally redirects unauthenticated requests to `/login`.
+- **Database Seeded Accounts** (Password: `Password123!`):
+  - `krina@smilecare.ai` — Dr. Krina Khunt (`CLINIC_ADMIN` / Practice Owner)
+  - `admin@smilecaredowntown.com` — Downtown Clinic Admin (`CLINIC_ADMIN`)
+  - `doctor@smilecaredowntown.com` — Dr. John Smith (`DOCTOR` / Dentist)
+  - `staff@smilecaredowntown.com` — Sarah Connor (`STAFF` / Receptionist)
+  - `superadmin@smilecare.com` — Platform Administrator (`SUPER_ADMIN`)
+- **Server Tenant Scoping**: Every protected route strictly derives `clinicId` from the authenticated JWT token (`req.clinicId`), preventing cross-tenant access. Unauthorized requests receive `401 Unauthorized` or `403 Forbidden`.

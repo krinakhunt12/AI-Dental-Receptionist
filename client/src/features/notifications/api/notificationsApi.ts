@@ -19,7 +19,19 @@ export async function getStaffNotifications(
   const res = await apiClient<any>('/notifications/staff', {
     params: { unreadOnly: unreadOnly ? 'true' : 'false' },
   });
-  return res?.data ?? res ?? [];
+  if (Array.isArray(res?.data?.notifications)) {
+    return res.data.notifications;
+  }
+  if (Array.isArray(res?.data)) {
+    return res.data;
+  }
+  if (Array.isArray(res?.notifications)) {
+    return res.notifications;
+  }
+  if (Array.isArray(res)) {
+    return res;
+  }
+  return [];
 }
 
 export async function acknowledgeStaffNotification(

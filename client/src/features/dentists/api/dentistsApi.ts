@@ -18,10 +18,12 @@ function mapDentist(d: any): Dentist {
 }
 
 export async function getDentists(clinicId: string): Promise<Dentist[]> {
-  const res = await apiClient<{ success?: boolean; data?: any[] } | any[]>('/dentists');
+  const res = await apiClient<{ success?: boolean; data?: any } | any[]>('/dentists');
   const rawList = Array.isArray(res)
     ? res
-    : (Array.isArray((res as any)?.data) ? (res as any).data : []);
+    : (Array.isArray((res as any)?.data)
+      ? (res as any).data
+      : (res as any)?.data?.doctors || []);
 
   return rawList.map(mapDentist);
 }

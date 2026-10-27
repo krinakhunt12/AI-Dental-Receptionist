@@ -89,7 +89,12 @@ export const AppLayout: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Staff notifications and escalation alerts
-  const { data: staffNotifs = [] } = useStaffNotifications();
+  const { data: rawStaffNotifs } = useStaffNotifications();
+  const staffNotifs: any[] = Array.isArray(rawStaffNotifs)
+    ? rawStaffNotifs
+    : Array.isArray((rawStaffNotifs as any)?.notifications)
+    ? (rawStaffNotifs as any).notifications
+    : [];
   const ackNotifMutation = useAcknowledgeStaffNotification();
   const unreadNotifs = staffNotifs.filter((n) => !n.isRead && !n.acknowledgedAt);
   const emergencyCount = unreadNotifs.filter((n) => n.severity === 'EMERGENCY').length;
